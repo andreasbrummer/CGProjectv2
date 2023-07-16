@@ -83,27 +83,26 @@ class A16 : public BaseProject {
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MBody, MHandle, MWheel,MCabinet;
+	Model<VertexMesh> MCabinet, MRoom1;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 	Model<VertexVColor> MRoom;
 	
-	Model<VertexOverlay> MKey, MSplash;
+	Model<VertexOverlay> MKey;
 	
-	DescriptorSet DSGubo, DSBody, DSHandle, DSWheel1, DSWheel2, DSWheel3, DSKey, DSSplash,DSCabinet;
+	DescriptorSet DSGubo, DSCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */	
-	DescriptorSet DSRoom;
-	Texture THandle, TWheel, TKey, TSplash,T1,T2,T3;
+	DescriptorSet DSRoom,DSRoom1;
+	Texture T1,T2,T3,TRoom1;
 
 	// C++ storage for uniform variables
-	MeshUniformBlock uboBody, uboHandle, uboWheel1, uboWheel2, uboWheel3,uboCabinet;
+	MeshUniformBlock uboCabinet,uboRoom1;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	MeshUniformBlock uboRoom;
 
 	GlobalUniformBlock gubo;
-	OverlayUniformBlock uboKey, uboSplash;
 
 	// Other application parameters
     int currScene = 0;
@@ -115,17 +114,7 @@ class A16 : public BaseProject {
     glm::vec3 cameraPos;
     float alpha;
     float beta;
-    float rho;
-
-    float CamYaw = glm::radians(0.0f);
-    float CamPitch = glm::radians(0.0f);
-    float CamRoll = glm::radians(0.0f);
-	float CamRadius;
-	float HandleRot = 0.0;
-	float Wheel1Rot = 0.0;
-	float Wheel2Rot = 0.0;
-	float Wheel3Rot = 0.0;
-	float RoomRot = 0.0;
+    float RoomRot = 0.0;
 
 	// Here you set the main application parameters
 	void setWindowParameters() {
@@ -139,9 +128,9 @@ class A16 : public BaseProject {
 		// Descriptor pool sizes
 		/* A16 -- OK */
 		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 10;
-		texturesInPool = 10;
-		setsInPool = 10;
+		uniformBlocksInPool = 11;
+		texturesInPool = 11;
+		setsInPool = 11;
 		
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -265,27 +254,22 @@ class A16 : public BaseProject {
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
-
+        MRoom1.init(this,&VMesh,"Models/RoomTexture.obj", OBJ);
 		
 		// Creates a mesh with direct enumeration of vertices and indices
 		
 		// Creates a mesh with direct enumeration of vertices and indices
-
 		
 		// Create the textures
 		// The second parameter is the file name
         T1.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
         T2.init(this, "textures/DefenderTextures/Material.001_metallicRoughness.png");
         T3.init(this, "textures/DefenderTextures/Material.001_normal.png");
-		
+		TRoom1.init(this,"textures/RoomTextures/ArcadeWalls.jpg");
 		
 		// Init local variables
-		CamRadius = 3.0f;
-		CamPitch = glm::radians(15.f);
-		CamYaw = glm::radians(30.f);
         alpha = 0.0f;
         beta = 0.0f;
-        rho= 0.0f;
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -309,6 +293,10 @@ class A16 : public BaseProject {
 		DSRoom.init(this, &DSLVColor, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}
 			});
+        DSRoom1.init(this, &DSLMesh,{
+            {0,UNIFORM,sizeof (MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &T1}
+            });
 		DSGubo.init(this, &DSLGubo, {
 					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 				});
@@ -327,6 +315,7 @@ class A16 : public BaseProject {
 		DSCabinet.cleanup();
 		/* A16 -- OK */
 		/* cleanup the dataset for the room */
+        DSRoom1.cleanup();
 		DSRoom.cleanup();
 		DSGubo.cleanup();
 	}
@@ -340,12 +329,14 @@ class A16 : public BaseProject {
 		T1.cleanup();
         T2.cleanup();
         T3.cleanup();
+        TRoom1.cleanup();
 		
 		// Cleanup models
 		MCabinet.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the mesh for the room */
 		MRoom.cleanup();
+        MRoom1.cleanup();
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
 		DSLOverlay.cleanup();
@@ -386,9 +377,7 @@ class A16 : public BaseProject {
 		// This is done automatically in file Starter.hpp, however the command here needs also the index
 		// of the current image in the swap chain, passed in its last parameter
 					
-		// record the drawing command in the command buffer
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MBody.indices.size()), 1, 0, 0, 0);
+		// record the drawing command in the command bufferun
 		// the second parameter is the number of indexes to be drawn. For a Model object,
 		// this can be retrieved with the .indices.size() method.
 
@@ -404,7 +393,13 @@ class A16 : public BaseProject {
 		DSRoom.bind(commandBuffer, PVColor, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
+
+        MRoom1.bind(commandBuffer);
+        DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
 		POverlay.bind(commandBuffer);
+
 	}
 
     void GameLogic() {
@@ -414,8 +409,7 @@ class A16 : public BaseProject {
         const float nearPlane = 0.1f;
         const float farPlane = 100.f;
         // Camera target height and distance
-        const float camHeight = 1.0f;
-        const float camDist = 1;
+        const float camHeight = 1.5f;
         // Camera Pitch limits
         const float minPitch = glm::radians(-60.0f);
         const float maxPitch = glm::radians(60.0f);
@@ -458,7 +452,7 @@ class A16 : public BaseProject {
         Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0,1,0) * deltaT;
         Pos.y = 0.0f;
         Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
-        cameraPos = Pos;
+        cameraPos = Pos+ glm::vec3 (0,camHeight,0);
 
         // Projection
         Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
@@ -493,16 +487,13 @@ class A16 : public BaseProject {
 		// the fourth parameter is the location inside the descriptor set of this uniform block
 
 		glm::mat4 World = glm::translate(glm::mat4(1),glm::vec3(2,0,2));
-
         World = glm::scale(glm::mat4(1),glm::vec3(0.01f));
 			
 		uboCabinet.amb = 1.0f; uboCabinet.gamma = 180.0f; uboCabinet.sColor = glm::vec3(1.0f);
 		uboCabinet.mvpMat = Prj * View * World;
 		uboCabinet.mMat = World;
 		uboCabinet.nMat = glm::inverse(glm::transpose(World));
-		
-		
-		DSCabinet.map(currentImage, &uboCabinet, sizeof(uboCabinet), 0);
+        DSCabinet.map(currentImage, &uboCabinet, sizeof(uboCabinet), 0);
 
 		/* A16 -- OK*/
 		/* fill the uniform block for the room. Identical to the one of the body of the slot machine */
@@ -513,6 +504,15 @@ class A16 : public BaseProject {
 		uboRoom.nMat = glm::inverse(glm::transpose(World));
 		/* map the uniform data block to the GPU */
 		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
+
+        /*
+        World = glm::mat4 (1);
+        uboRoom1.amb = 1.0f; uboRoom1.gamma = 180.0f; uboRoom1.sColor = glm::vec3(1.0f);
+
+        uboRoom1.mvpMat = Prj * View * World;
+        uboRoom1.mMat = World;
+        uboRoom1.nMat = glm::inverse(glm::transpose(World));
+        DSRoom1.map(currentImage, &uboRoom1, sizeof(uboRoom1), 0); */
 
 	}	
 };
