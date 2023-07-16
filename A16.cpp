@@ -83,7 +83,7 @@ class A16 : public BaseProject {
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet, MRoom1;
+	Model<VertexMesh> MCabinet, MRoom1,MCeiling,MFloor;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
@@ -95,11 +95,11 @@ class A16 : public BaseProject {
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */	
 	//DescriptorSet DSRoom
-    DescriptorSet DSRoom1;
-	Texture T1,T2,T3,TRoom1;
+    DescriptorSet DSRoom1,DSCeiling,DSFloor;
+	Texture T1,T2,T3,TRoom1,TCeiling,TFloor;
 
 	// C++ storage for uniform variables
-	MeshUniformBlock uboCabinet,uboRoom1;
+	MeshUniformBlock uboCabinet,uboRoom1,uboCeiling,uboFloor;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -130,9 +130,9 @@ class A16 : public BaseProject {
 		// Descriptor pool sizes
 		/* A16 -- OK */
 		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 15;
-		texturesInPool = 15;
-		setsInPool = 15;
+		uniformBlocksInPool = 16;
+		texturesInPool = 16;
+		setsInPool = 16;
 		
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -256,7 +256,12 @@ class A16 : public BaseProject {
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
-        MRoom1.init(this, &VMesh, "Models/RoomTexture.obj", OBJ);
+        MRoom1.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
+
+		MCeiling.init(this, &VMesh, "Models/CeilingV3.obj", OBJ);
+
+		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
+
 		
 		// Creates a mesh with direct enumeration of vertices and indices
 		
@@ -268,6 +273,8 @@ class A16 : public BaseProject {
         T2.init(this, "textures/DefenderTextures/Material.001_metallicRoughness.png");
         T3.init(this, "textures/DefenderTextures/Material.001_normal.png");
 		TRoom1.init(this,"textures/RoomTextures/ArcadeWalls.jpg");
+		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
+		TFloor.init(this, "textures/RoomTextures/Floor.jpg");
 		
 		// Init local variables
         alpha = 0.0f;
@@ -302,6 +309,14 @@ class A16 : public BaseProject {
 				{0,UNIFORM,sizeof (MeshUniformBlock), nullptr},
 				{1, TEXTURE, 0, &TRoom1}
             });
+		DSCeiling.init(this, &DSLMesh, {
+		{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+		{1, TEXTURE, 0, &TCeiling}
+			});
+		DSFloor.init(this, &DSLMesh, {
+		{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+		{1, TEXTURE, 0, &TFloor}
+			});
 
 		DSGubo.init(this, &DSLGubo, {
 					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
@@ -323,6 +338,8 @@ class A16 : public BaseProject {
 		/* cleanup the dataset for the room */
         DSRoom1.cleanup();
 		//DSRoom.cleanup();
+		DSCeiling.cleanup();
+		DSFloor.cleanup();
 		DSGubo.cleanup();
 	}
 
@@ -336,6 +353,8 @@ class A16 : public BaseProject {
         T2.cleanup();
         T3.cleanup();
         TRoom1.cleanup();
+		TCeiling.cleanup();
+		TFloor.cleanup();
 		
 		// Cleanup models
 		MCabinet.cleanup();
@@ -343,6 +362,8 @@ class A16 : public BaseProject {
 		/* Cleanup the mesh for the room */
 		//MRoom.cleanup();
         MRoom1.cleanup();
+		MCeiling.cleanup();
+		MFloor.cleanup();
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
 		DSLOverlay.cleanup();
@@ -391,11 +412,23 @@ class A16 : public BaseProject {
 		DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
-        MRoom1.bind(commandBuffer);
+		MRoom1.bind(commandBuffer);
        // DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
+
+		MCeiling.bind(commandBuffer);
+		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+		DSCeiling.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MCeiling.indices.size()), 1, 0, 0, 0);
+
+		MFloor.bind(commandBuffer);
+		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+		DSFloor.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
 		/* A16 -- OK */
 		/* Insert the commands to draw the room */
 		//PVColor.bind(commandBuffer);
@@ -457,7 +490,7 @@ class A16 : public BaseProject {
         glm::vec3 uz = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
         Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
         Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0,1,0) * deltaT;
-        Pos.y = 0.0f;
+        //Pos.y = 0.0f; //DEBUG
         Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
         cameraPos = Pos+ glm::vec3 (0,camHeight,0);
 
@@ -518,6 +551,21 @@ class A16 : public BaseProject {
         uboRoom1.mMat = World;
         uboRoom1.nMat = glm::inverse(glm::transpose(World));
         DSRoom1.map(currentImage, &uboRoom1, sizeof(uboRoom1), 0);
+
+		World = glm::mat4(1);
+		uboCeiling.amb = 1.0f; uboCeiling.gamma = 180.0f; uboCeiling.sColor = glm::vec3(1.0f);
+		uboCeiling.mvpMat = Prj * View * World;
+		uboCeiling.mMat = World;
+		uboCeiling.nMat = glm::inverse(glm::transpose(World));
+		DSCeiling.map(currentImage, &uboCeiling, sizeof(uboCeiling), 0);
+
+		World = glm::mat4(1);
+		uboFloor.amb = 1.0f; uboFloor.gamma = 180.0f; uboFloor.sColor = glm::vec3(1.0f);
+		uboFloor.mvpMat = Prj * View * World;
+		uboFloor.mMat = World;
+		uboFloor.nMat = glm::inverse(glm::transpose(World));
+		DSFloor.map(currentImage, &uboFloor, sizeof(uboFloor), 0);
+
 
 	}	
 };
