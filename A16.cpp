@@ -87,21 +87,22 @@ class A16 : public BaseProject {
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
-	Model<VertexVColor> MRoom;
+	//Model<VertexVColor> MRoom;
 	
 	Model<VertexOverlay> MKey;
 	
 	DescriptorSet DSGubo, DSCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */	
-	DescriptorSet DSRoom,DSRoom1;
+	//DescriptorSet DSRoom
+    DescriptorSet DSRoom1;
 	Texture T1,T2,T3,TRoom1;
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCabinet,uboRoom1;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
-	MeshUniformBlock uboRoom;
+	//MeshUniformBlock uboRoom;
 
 	GlobalUniformBlock gubo;
 
@@ -254,7 +255,7 @@ class A16 : public BaseProject {
 		MCabinet.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
-		MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
+		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
         MRoom1.init(this, &VMesh, "Models/RoomTexture.obj", OBJ);
 		
 		// Creates a mesh with direct enumeration of vertices and indices
@@ -291,9 +292,11 @@ class A16 : public BaseProject {
 				});
 		/* A16 -- OK */
 		/* Define the data set for the room */
-		DSRoom.init(this, &DSLVColor, {
+		/*
+        DSRoom.init(this, &DSLVColor, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}
 			});
+        */
 
         DSRoom1.init(this, &DSLMesh,{
 				{0,UNIFORM,sizeof (MeshUniformBlock), nullptr},
@@ -319,7 +322,7 @@ class A16 : public BaseProject {
 		/* A16 -- OK */
 		/* cleanup the dataset for the room */
         DSRoom1.cleanup();
-		DSRoom.cleanup();
+		//DSRoom.cleanup();
 		DSGubo.cleanup();
 	}
 
@@ -338,7 +341,7 @@ class A16 : public BaseProject {
 		MCabinet.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the mesh for the room */
-		MRoom.cleanup();
+		//MRoom.cleanup();
         MRoom1.cleanup();
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -389,17 +392,17 @@ class A16 : public BaseProject {
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
         MRoom1.bind(commandBuffer);
+       // DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
 		/* A16 -- OK */
 		/* Insert the commands to draw the room */
-		PVColor.bind(commandBuffer);
-		MRoom.bind(commandBuffer);
-		DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
-		DSRoom.bind(commandBuffer, PVColor, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
+		//PVColor.bind(commandBuffer);
+		//MRoom.bind(commandBuffer);
+		//DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
+		//vkCmdDrawIndexed(commandBuffer,
+		//		static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 
 
 		POverlay.bind(commandBuffer);
@@ -499,14 +502,14 @@ class A16 : public BaseProject {
         DSCabinet.map(currentImage, &uboCabinet, sizeof(uboCabinet), 0);
 
 		/* A16 -- OK*/
-		/* fill the uniform block for the room. Identical to the one of the body of the slot machine */
+		/* fill the uniform block for the room. Identical to the one of the body of the slot machine
 		World = glm::scale(glm::mat4(1),glm::vec3(1,2.5f,1));
 		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
 		uboRoom.mvpMat = Prj * View * World;
 		uboRoom.mMat = World;
 		uboRoom.nMat = glm::inverse(glm::transpose(World));
 		/* map the uniform data block to the GPU */
-		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
+		//DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
 
         
         World = glm::mat4 (1);
