@@ -86,6 +86,7 @@ class A16 : public BaseProject {
 	Model<VertexMesh> MCabinet, MRoom1;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
+
 	Model<VertexVColor> MRoom;
 	
 	Model<VertexOverlay> MKey;
@@ -128,9 +129,9 @@ class A16 : public BaseProject {
 		// Descriptor pool sizes
 		/* A16 -- OK */
 		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 11;
-		texturesInPool = 11;
-		setsInPool = 11;
+		uniformBlocksInPool = 15;
+		texturesInPool = 15;
+		setsInPool = 15;
 		
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -250,11 +251,11 @@ class A16 : public BaseProject {
 		// The second parameter is the pointer to the vertex definition for this model
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		MCabinet.init(this,  &VMesh, "Models/Cabinet.obj", OBJ);
+		MCabinet.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
-        MRoom1.init(this,&VMesh,"Models/RoomTexture.obj", OBJ);
+        MRoom1.init(this, &VMesh, "Models/RoomTexture.obj", OBJ);
 		
 		// Creates a mesh with direct enumeration of vertices and indices
 		
@@ -293,10 +294,12 @@ class A16 : public BaseProject {
 		DSRoom.init(this, &DSLVColor, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}
 			});
+
         DSRoom1.init(this, &DSLMesh,{
-            {0,UNIFORM,sizeof (MeshUniformBlock), nullptr},
-            {1, TEXTURE, 0, &T1}
+				{0,UNIFORM,sizeof (MeshUniformBlock), nullptr},
+				{1, TEXTURE, 0, &TRoom1}
             });
+
 		DSGubo.init(this, &DSLGubo, {
 					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 				});
@@ -397,7 +400,7 @@ class A16 : public BaseProject {
         MRoom1.bind(commandBuffer);
         DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
 		POverlay.bind(commandBuffer);
 
 	}
@@ -505,14 +508,14 @@ class A16 : public BaseProject {
 		/* map the uniform data block to the GPU */
 		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
 
-        /*
+        
         World = glm::mat4 (1);
         uboRoom1.amb = 1.0f; uboRoom1.gamma = 180.0f; uboRoom1.sColor = glm::vec3(1.0f);
 
         uboRoom1.mvpMat = Prj * View * World;
         uboRoom1.mMat = World;
         uboRoom1.nMat = glm::inverse(glm::transpose(World));
-        DSRoom1.map(currentImage, &uboRoom1, sizeof(uboRoom1), 0); */
+        DSRoom1.map(currentImage, &uboRoom1, sizeof(uboRoom1), 0);
 
 	}	
 };
