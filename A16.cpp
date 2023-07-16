@@ -94,7 +94,7 @@ class A16 : public BaseProject {
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */	
 	DescriptorSet DSRoom;
-	Texture TBody, THandle, TWheel, TKey, TSplash,T1,T2,T3;
+	Texture THandle, TWheel, TKey, TSplash,T1,T2,T3;
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboBody, uboHandle, uboWheel1, uboWheel2, uboWheel3,uboCabinet;
@@ -113,6 +113,10 @@ class A16 : public BaseProject {
     glm::mat4 World = glm::mat4(1);
     glm::vec3 Pos = glm::vec3(0,0,15);
     glm::vec3 cameraPos;
+    float alpha;
+    float beta;
+    float rho;
+
     float CamYaw = glm::radians(0.0f);
     float CamPitch = glm::radians(0.0f);
     float CamRoll = glm::radians(0.0f);
@@ -257,34 +261,19 @@ class A16 : public BaseProject {
 		// The second parameter is the pointer to the vertex definition for this model
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		MBody.init(this,   &VMesh, "Models/SlotBody.obj", OBJ);
-		MHandle.init(this, &VMesh, "Models/SlotHandle.obj", OBJ);
-		MWheel.init(this,  &VMesh, "Models/SlotWheel.obj", OBJ);
-		MCabinet.init(this,  &VMesh, "Models/untitled.obj", OBJ);
+		MCabinet.init(this,  &VMesh, "Models/Cabinet.obj", OBJ);
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
 
 		
 		// Creates a mesh with direct enumeration of vertices and indices
-		MKey.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
-						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}}};
-		MKey.indices = {0, 1, 2,    1, 2, 3};
-		MKey.initMesh(this, &VOverlay);
 		
 		// Creates a mesh with direct enumeration of vertices and indices
-		MSplash.vertices = {{{-1.0f, -0.58559f}, {0.0102f, 0.0f}}, {{-1.0f, 0.58559f}, {0.0102f,0.85512f}},
-						 {{ 1.0f,-0.58559f}, {1.0f,0.0f}}, {{ 1.0f, 0.58559f}, {1.0f,0.85512f}}};
-		MSplash.indices = {0, 1, 2,    1, 2, 3};
-		MSplash.initMesh(this, &VOverlay);
+
 		
 		// Create the textures
 		// The second parameter is the file name
-		TBody.init(this,   "textures/SlotBody.png");
-		THandle.init(this, "textures/SlotHandle.png");
-		TWheel.init(this,  "textures/SlotWheel.png");
-		TKey.init(this,    "textures/PressSpace.png");
-		TSplash.init(this, "textures/SplashScreen.png");
         T1.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
         T2.init(this, "textures/DefenderTextures/Material.001_metallicRoughness.png");
         T3.init(this, "textures/DefenderTextures/Material.001_normal.png");
@@ -294,6 +283,9 @@ class A16 : public BaseProject {
 		CamRadius = 3.0f;
 		CamPitch = glm::radians(15.f);
 		CamYaw = glm::radians(30.f);
+        alpha = 0.0f;
+        beta = 0.0f;
+        rho= 0.0f;
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -305,32 +297,6 @@ class A16 : public BaseProject {
 		/* Create the new pipeline */
 		PVColor.create();
 		// Here you define the data set
-		DSBody.init(this, &DSLMesh, {
-		// the second parameter, is a pointer to the Uniform Set Layout of this set
-		// the last parameter is an array, with one element per binding of the set.
-		// first  elmenet : the binding number
-		// second element : UNIFORM or TEXTURE (an enum) depending on the type
-		// third  element : only for UNIFORMs, the size of the corresponding C++ object. For texture, just put 0
-		// fourth element : only for TEXTUREs, the pointer to the corresponding texture object. For uniforms, use nullptr
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TBody}
-				});
-		DSHandle.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &THandle}
-				});
-		DSWheel1.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TWheel}
-				});
-		DSWheel2.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TWheel}
-				});
-		DSWheel3.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TWheel}
-				});
 		DSCabinet.init(this, &DSLCabinet, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &T1},
@@ -343,14 +309,6 @@ class A16 : public BaseProject {
 		DSRoom.init(this, &DSLVColor, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}
 			});
-		DSKey.init(this, &DSLOverlay, {
-					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TKey}
-				});
-		DSSplash.init(this, &DSLOverlay, {
-					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TSplash}
-				});
 		DSGubo.init(this, &DSLGubo, {
 					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 				});
@@ -366,16 +324,10 @@ class A16 : public BaseProject {
 		/* cleanup the new pipeline */
 		PVColor.cleanup();
 		// Cleanup datasets
-		DSBody.cleanup();
-		DSHandle.cleanup();
-		DSWheel1.cleanup();
-		DSWheel2.cleanup();
-		DSWheel3.cleanup();
+		DSCabinet.cleanup();
 		/* A16 -- OK */
 		/* cleanup the dataset for the room */
 		DSRoom.cleanup();
-		DSKey.cleanup();
-		DSSplash.cleanup();
 		DSGubo.cleanup();
 	}
 
@@ -385,18 +337,12 @@ class A16 : public BaseProject {
 	// methods: .cleanup() recreates them, while .destroy() delete them completely
 	void localCleanup() {
 		// Cleanup textures
-		TBody.cleanup();
-		THandle.cleanup();
-		TWheel.cleanup();
-		TKey.cleanup();
-		TSplash.cleanup();
+		T1.cleanup();
+        T2.cleanup();
+        T3.cleanup();
 		
 		// Cleanup models
-		MBody.cleanup();
-		MHandle.cleanup();
-		MWheel.cleanup();
-		MKey.cleanup();
-		MSplash.cleanup();
+		MCabinet.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the mesh for the room */
 		MRoom.cleanup();
@@ -429,12 +375,10 @@ class A16 : public BaseProject {
 		// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
 
 		// binds the model
-		MBody.bind(commandBuffer);
 		// For a Model object, this command binds the corresponing index and vertex buffer
 		// to the command buffer passed in its parameter
 		
 		// binds the data set
-		DSBody.bind(commandBuffer, PMesh, 1, currentImage);
 		// For a Dataset object, this command binds the corresponing dataset
 		// to the command buffer and pipeline passed in its first and second parameters.
 		// The third parameter is the number of the set being bound
@@ -448,23 +392,6 @@ class A16 : public BaseProject {
 		// the second parameter is the number of indexes to be drawn. For a Model object,
 		// this can be retrieved with the .indices.size() method.
 
-		MHandle.bind(commandBuffer);
-		DSHandle.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MHandle.indices.size()), 1, 0, 0, 0);
-
-		MWheel.bind(commandBuffer);
-		DSWheel1.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-		DSWheel2.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-		DSWheel3.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-				
-		
 		MCabinet.bind(commandBuffer);
 		DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
@@ -478,15 +405,6 @@ class A16 : public BaseProject {
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 		POverlay.bind(commandBuffer);
-		MKey.bind(commandBuffer);
-		DSKey.bind(commandBuffer, POverlay, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MKey.indices.size()), 1, 0, 0, 0);
-
-		MSplash.bind(commandBuffer);
-		DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
 	}
 
     void GameLogic() {
@@ -523,37 +441,34 @@ class A16 : public BaseProject {
         } else {
             MOVE_SPEED = 2.0f;
         }
+
+        // Rotation
+
+        alpha = alpha - ROT_SPEED * deltaT * r.y;
+        beta  = beta  - ROT_SPEED * deltaT * r.x;
+        beta  =  beta < glm::radians(-90.0f) ? glm::radians(-90.0f) :
+                 (beta > glm::radians( 90.0f) ? glm::radians( 90.0f) : beta);
+
+
+
         // Position
-        glm::vec3 ux = glm::rotate(glm::mat4(1.0f), CamYaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
-        glm::vec3 uz = glm::rotate(glm::mat4(1.0f), CamYaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
+        glm::vec3 ux = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
+        glm::vec3 uz = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
         Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
         Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0,1,0) * deltaT;
         Pos.y = 0.0f;
         Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
-        // Rotation
-        CamYaw = CamYaw - ROT_SPEED * deltaT * r.y;
-        CamPitch = CamPitch + ROT_SPEED * deltaT * r.x;
-        CamPitch  =  CamPitch < minPitch ? minPitch :
-                  (CamPitch > maxPitch ? maxPitch : CamPitch);
-        CamPitch = 0;
-        //Roll is constant
-        // Final world matrix computation
-        World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), CamYaw, glm::vec3(0,1,0));
+        cameraPos = Pos;
 
         // Projection
         Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
         Prj[1][1] *= -1;
 
-        // Target
-        glm::vec3 target = Pos + glm::vec3(0.0f, camHeight, 0.0f);
+        View =  //glm::rotate(glm::mat4(1.0),-rho,glm::vec3(0,0,1)) *
+                glm::rotate(glm::mat4(1.0),-beta,glm::vec3(1,0,0)) *
+                glm::rotate(glm::mat4(1.0),-alpha,glm::vec3(0,1,0)) *
+                glm::translate(glm::mat4(1.0),-cameraPos);
 
-        // Camera position, depending on Yaw parameter, but not character direction
-
-        cameraPos = World * glm::vec4(0.0f, camHeight + camDist * sin(CamPitch), camDist* cos(CamPitch), 1.0);
-        cameraPos = Pos;
-        // Damping of camera
-        View = glm::rotate(glm::mat4(1.0f), -CamRoll, glm::vec3(0,0,1)) *
-                         glm::lookAt(cameraPos, target, glm::vec3(0,1,0));
     }
 	// Here is where you update the uniforms.
 	// Very likely this will be where you will be writing the logic of your application.
@@ -578,12 +493,6 @@ class A16 : public BaseProject {
 		// the fourth parameter is the location inside the descriptor set of this uniform block
 
 		glm::mat4 World = glm::translate(glm::mat4(1),glm::vec3(2,0,2));
-		uboBody.amb = 1.0f; uboBody.gamma = 180.0f; uboBody.sColor = glm::vec3(1.0f);
-		uboBody.mvpMat = Prj * View * World;
-		uboBody.mMat = World;
-		uboBody.nMat = glm::inverse(glm::transpose(World));
-		
-		DSBody.map(currentImage, &uboBody, sizeof(uboBody), 0);
 
         World = glm::scale(glm::mat4(1),glm::vec3(0.01f));
 			
@@ -594,40 +503,7 @@ class A16 : public BaseProject {
 		
 		
 		DSCabinet.map(currentImage, &uboCabinet, sizeof(uboCabinet), 0);
-		
-		
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.3f,0.5f,-0.15f)),
-							HandleRot, glm::vec3(1,0,0));
-		uboHandle.amb = 1.0f; uboHandle.gamma = 180.0f; uboHandle.sColor = glm::vec3(1.0f);
-		uboHandle.mvpMat = Prj * View * World;
-		uboHandle.mMat = World;
-		uboHandle.nMat = glm::inverse(glm::transpose(World));
-		DSHandle.map(currentImage, &uboHandle, sizeof(uboHandle), 0);
-	
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(-0.15f,0.93f,-0.15f)),
-							Wheel1Rot, glm::vec3(1,0,0));
-		uboWheel1.amb = 1.0f; uboWheel1.gamma = 180.0f; uboWheel1.sColor = glm::vec3(1.0f);
-		uboWheel1.mvpMat = Prj * View * World;
-		uboWheel1.mMat = World;
-		uboWheel1.nMat = glm::inverse(glm::transpose(World));
-		DSWheel1.map(currentImage, &uboWheel1, sizeof(uboWheel1), 0);
-	
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.93f,-0.15f)),
-							Wheel2Rot, glm::vec3(1,0,0));
-		uboWheel2.amb = 1.0f; uboWheel2.gamma = 180.0f; uboWheel2.sColor = glm::vec3(1.0f);
-		uboWheel2.mvpMat = Prj * View * World;
-		uboWheel2.mMat = World;
-		uboWheel2.nMat = glm::inverse(glm::transpose(World));
-		DSWheel2.map(currentImage, &uboWheel2, sizeof(uboWheel2), 0);
-	
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.15f,0.93f,-0.15f)),
-							Wheel3Rot, glm::vec3(1,0,0));
-		uboWheel3.amb = 1.0f; uboWheel3.gamma = 180.0f; uboWheel3.sColor = glm::vec3(1.0f);
-		uboWheel3.mvpMat = Prj * View * World;
-		uboWheel3.mMat = World;
-		uboWheel3.nMat = glm::inverse(glm::transpose(World));
-		DSWheel3.map(currentImage, &uboWheel3, sizeof(uboWheel3), 0);
-		
+
 		/* A16 -- OK*/
 		/* fill the uniform block for the room. Identical to the one of the body of the slot machine */
 		World = glm::scale(glm::mat4(1),glm::vec3(1,2.5f,1));
@@ -638,12 +514,6 @@ class A16 : public BaseProject {
 		/* map the uniform data block to the GPU */
 		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
 
-
-		uboKey.visible = (gameState == 1) ? 1.0f : 0.0f;
-		DSKey.map(currentImage, &uboKey, sizeof(uboKey), 0);
-
-		uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
-		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
 	}	
 };
 
