@@ -388,6 +388,10 @@ class A16 : public BaseProject {
 		DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
+        MRoom1.bind(commandBuffer);
+        DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
 		/* A16 -- OK */
 		/* Insert the commands to draw the room */
 		PVColor.bind(commandBuffer);
@@ -397,10 +401,7 @@ class A16 : public BaseProject {
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 
-        MRoom1.bind(commandBuffer);
-        DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
+
 		POverlay.bind(commandBuffer);
 
 	}
@@ -489,7 +490,6 @@ class A16 : public BaseProject {
 		// the third parameter is its size
 		// the fourth parameter is the location inside the descriptor set of this uniform block
 
-		glm::mat4 World = glm::translate(glm::mat4(1),glm::vec3(2,0,2));
         World = glm::scale(glm::mat4(1),glm::vec3(0.01f));
 			
 		uboCabinet.amb = 1.0f; uboCabinet.gamma = 180.0f; uboCabinet.sColor = glm::vec3(1.0f);
@@ -511,7 +511,6 @@ class A16 : public BaseProject {
         
         World = glm::mat4 (1);
         uboRoom1.amb = 1.0f; uboRoom1.gamma = 180.0f; uboRoom1.sColor = glm::vec3(1.0f);
-
         uboRoom1.mvpMat = Prj * View * World;
         uboRoom1.mMat = World;
         uboRoom1.nMat = glm::inverse(glm::transpose(World));
