@@ -11,6 +11,7 @@
 //        mat3  : alignas(16)
 //        mat4  : alignas(16)
 
+
 struct MeshUniformBlock {
 	alignas(4) float amb;
 	alignas(4) float gamma;
@@ -118,7 +119,19 @@ class A16 : public BaseProject {
     float beta;
     float RoomRot = 0.0;
 
-	// Here you set the main application parameters
+
+    //PROVA
+    // Jump parameters
+    bool isJumping = false;         // Flag to indicate if the player is currently jumping
+    float jumpVelocity = 0.0f;      // Initial jump velocity
+    float jumpHeight = 2.0f;        // Height the player can reach during the jump
+    float gravity = 9.8f;           // Acceleration due to gravity
+    float maxJumpTime = 1.0f;       // Maximum duration of the jump
+    float jumpTime = 0.0f;          // Current time elapsed during the jump
+
+
+
+    // Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, titile and initial background
 		windowWidth = 800;
@@ -457,6 +470,8 @@ class A16 : public BaseProject {
         const float ROT_SPEED = glm::radians(120.0f);
         float MOVE_SPEED = 2.0f* 2.0f;
 
+
+
         // Integration with the timers and the controllers
         float deltaT;
         glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
@@ -475,6 +490,39 @@ class A16 : public BaseProject {
         } else {
             MOVE_SPEED = 2.0f;
         }
+
+        // Jumping
+        if (glfwGetKey(window, GLFW_KEY_SPACE) && !isJumping) {
+            // Start the jump
+            isJumping = true;
+            jumpVelocity = sqrt(2.0f * gravity * jumpHeight);  // Calculate the initial velocity based on the desired jump height
+            jumpTime = 0.0f;
+        }
+
+        // Check if the player is currently jumping
+        if (isJumping) {
+            // Update the jump time
+            jumpTime += deltaT;
+
+            // Apply gravity to the jump velocity
+            jumpVelocity -= gravity * deltaT;
+
+            // Calculate the new position based on the jump velocity
+            glm::vec3 jumpOffset = glm::vec3(0, jumpVelocity * deltaT, 0);
+            Pos += jumpOffset;
+
+            // Check if the maximum jump time is reached or if the player has landed
+            if (jumpTime >= maxJumpTime || Pos.y <= 0.0f) {
+                // End the jump
+                isJumping = false;
+                jumpVelocity = 0.0f;
+                jumpTime = 0.0f;
+
+                // Ensure the player is on the ground level
+                Pos.y = 0.0f;
+            }
+        }
+
 
         // Rotation
 
