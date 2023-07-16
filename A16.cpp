@@ -64,7 +64,7 @@ class A16 : public BaseProject {
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay,DSLCabinet;
+	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLCabinet, DSLNeoGeoCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the required Descriptor Set Layout */
 	DescriptorSetLayout DSLVColor;
@@ -84,7 +84,7 @@ class A16 : public BaseProject {
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet, MRoom1,MCeiling,MFloor;
+	Model<VertexMesh> MCabinet1,MRoom1,MCeiling,MFloor,MNeoGeoCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
@@ -92,15 +92,16 @@ class A16 : public BaseProject {
 	
 	Model<VertexOverlay> MKey;
 	
-	DescriptorSet DSGubo, DSCabinet;
+	DescriptorSet DSGubo,DSCabinet, DSNeoGeoCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */	
 	//DescriptorSet DSRoom
     DescriptorSet DSRoom1,DSCeiling,DSFloor;
 	Texture T1,T2,T3,TRoom1,TCeiling,TFloor;
+	Texture NeoGeoCabinetT1, NeoGeoCabinetT2;
 
 	// C++ storage for uniform variables
-	MeshUniformBlock uboCabinet,uboRoom1,uboCeiling,uboFloor;
+	MeshUniformBlock uboCabinet1,uboRoom1,uboCeiling,uboFloor,uboNeoGeoCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -113,12 +114,11 @@ class A16 : public BaseProject {
     glm::mat4 View = glm::mat4(1);
     glm::mat4 Prj = glm::mat4(1);
     glm::mat4 World = glm::mat4(1);
-    glm::vec3 Pos = glm::vec3(0,0,15);
-    glm::vec3 cameraPos;
+    glm::vec3 Pos = glm::vec3(12,0,-25);
+	glm::vec3 cameraPos;
     float alpha;
     float beta;
     float RoomRot = 0.0;
-
 
     //PROVA
     // Jump parameters
@@ -128,7 +128,6 @@ class A16 : public BaseProject {
     float gravity = 9.8f;           // Acceleration due to gravity
     float maxJumpTime = 1.0f;       // Maximum duration of the jump
     float jumpTime = 0.0f;          // Current time elapsed during the jump
-
 
 
     // Here you set the main application parameters
@@ -165,6 +164,11 @@ class A16 : public BaseProject {
                                 {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                                 {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
         });
+		DSLNeoGeoCabinet.init(this, {
+								{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+								{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+								{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			});
 		DSLMesh.init(this, {
 					// this array contains the bindings:
 					// first  element : the binding number
@@ -252,7 +256,7 @@ class A16 : public BaseProject {
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh,&DSLCabinet});
+		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh,&DSLCabinet, &DSLNeoGeoCabinet });
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
  								    VK_CULL_MODE_NONE, false);
@@ -265,7 +269,8 @@ class A16 : public BaseProject {
 		// The second parameter is the pointer to the vertex definition for this model
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		MCabinet.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
+		MCabinet1.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
+		MNeoGeoCabinet.init(this, &VMesh, "Models/neoGeoCabinet.obj", OBJ);
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
@@ -288,9 +293,11 @@ class A16 : public BaseProject {
 		TRoom1.init(this,"textures/RoomTextures/ArcadeWalls.jpg");
 		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
 		TFloor.init(this, "textures/RoomTextures/Floor.jpg");
+		NeoGeoCabinetT1.init(this, "textures/NeoGeoCabinet/DM.jpg");
+		NeoGeoCabinetT2.init(this, "textures/NeoGeoCabinet/NM.jpg");
 		
 		// Init local variables
-        alpha = 0.0f;
+        alpha = glm::radians(180.0f);
         beta = 0.0f;
 	}
 	
@@ -310,6 +317,12 @@ class A16 : public BaseProject {
                     {3, TEXTURE, 0, &T3}
 
 				});
+
+		DSNeoGeoCabinet.init(this, &DSLNeoGeoCabinet, {
+					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+					{1, TEXTURE, 0, &NeoGeoCabinetT1},
+					{2, TEXTURE, 0, &NeoGeoCabinetT2}
+			});
 		/* A16 -- OK */
 		/* Define the data set for the room */
 		/*
@@ -347,6 +360,7 @@ class A16 : public BaseProject {
 		PVColor.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
+		DSNeoGeoCabinet.cleanup();
 		/* A16 -- OK */
 		/* cleanup the dataset for the room */
         DSRoom1.cleanup();
@@ -365,12 +379,15 @@ class A16 : public BaseProject {
 		T1.cleanup();
         T2.cleanup();
         T3.cleanup();
+		NeoGeoCabinetT1.cleanup();
+		NeoGeoCabinetT2.cleanup();
         TRoom1.cleanup();
 		TCeiling.cleanup();
 		TFloor.cleanup();
 		
 		// Cleanup models
-		MCabinet.cleanup();
+		MCabinet1.cleanup();
+		MNeoGeoCabinet.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the mesh for the room */
 		//MRoom.cleanup();
@@ -384,6 +401,9 @@ class A16 : public BaseProject {
 		/* Cleanup the new Descriptor Set Layout */
 		DSLVColor.cleanup();
 		DSLGubo.cleanup();
+
+		DSLCabinet.cleanup();
+		DSLNeoGeoCabinet.cleanup();
 		
 		// Destroies the pipelines
 		PMesh.destroy();		
@@ -421,10 +441,16 @@ class A16 : public BaseProject {
 		// the second parameter is the number of indexes to be drawn. For a Model object,
 		// this can be retrieved with the .indices.size() method.
 
-		MCabinet.bind(commandBuffer);
+		MCabinet1.bind(commandBuffer);
 		DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MCabinet1.indices.size()), 1, 0, 0, 0);
+
+		MNeoGeoCabinet.bind(commandBuffer);
+		DSNeoGeoCabinet.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MNeoGeoCabinet.indices.size()), 1, 0, 0, 0);
+
 		MRoom1.bind(commandBuffer);
        // DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
@@ -462,7 +488,7 @@ class A16 : public BaseProject {
         const float nearPlane = 0.1f;
         const float farPlane = 100.f;
         // Camera target height and distance
-        const float camHeight = 1.5f;
+        const float camHeight = 2.1f;
         // Camera Pitch limits
         const float minPitch = glm::radians(-60.0f);
         const float maxPitch = glm::radians(60.0f);
@@ -574,13 +600,22 @@ class A16 : public BaseProject {
 		// the third parameter is its size
 		// the fourth parameter is the location inside the descriptor set of this uniform block
 
-        World = glm::scale(glm::mat4(1),glm::vec3(0.01f));
+		World = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0f, -1.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
 			
-		uboCabinet.amb = 1.0f; uboCabinet.gamma = 180.0f; uboCabinet.sColor = glm::vec3(1.0f);
-		uboCabinet.mvpMat = Prj * View * World;
-		uboCabinet.mMat = World;
-		uboCabinet.nMat = glm::inverse(glm::transpose(World));
-        DSCabinet.map(currentImage, &uboCabinet, sizeof(uboCabinet), 0);
+		uboCabinet1.amb = 1.0f; uboCabinet1.gamma = 180.0f; uboCabinet1.sColor = glm::vec3(1.0f);
+		uboCabinet1.mvpMat = Prj * View * World;
+		uboCabinet1.mMat = World;
+		uboCabinet1.nMat = glm::inverse(glm::transpose(World));
+        DSCabinet.map(currentImage, &uboCabinet1, sizeof(uboCabinet1), 0);
+
+		World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) * 
+			glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) * glm::scale(glm::mat4(1), glm::vec3(0.0065f));
+
+		uboNeoGeoCabinet.amb = 1.0f; uboNeoGeoCabinet.gamma = 180.0f; uboNeoGeoCabinet.sColor = glm::vec3(1.0f);
+		uboNeoGeoCabinet.mvpMat = Prj * View * World;
+		uboNeoGeoCabinet.mMat = World;
+		uboNeoGeoCabinet.nMat = glm::inverse(glm::transpose(World));
+		DSNeoGeoCabinet.map(currentImage, &uboNeoGeoCabinet, sizeof(uboNeoGeoCabinet), 0);
 
 		/* A16 -- OK*/
 		/* fill the uniform block for the room. Identical to the one of the body of the slot machine
