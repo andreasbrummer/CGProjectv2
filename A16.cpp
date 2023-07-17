@@ -91,24 +91,26 @@ protected:
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet1, MRoom1, MCeiling, MFloor, MNeoGeoCabinet;
+	Model<VertexMesh> MCabinet1, MRoom1, MCeiling, MFloor, MNeoGeoCabinet,MCeilingLamp1;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
 	//Model<VertexVColor> MRoom;
 
+
 	Model<VertexOverlay> MKey;
 
-	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet;
+	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
 	DescriptorSet DSRoom1, DSCeiling, DSFloor;
 	Texture T1, T2, T3, TRoom1, TCeiling, TFloor;
 	Texture NeoGeoCabinetT1, NeoGeoCabinetT2;
+	Texture TCeilingLamp1;
 
 	// C++ storage for uniform variables
-	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet;
+	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet,uboCeilingLamp1;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -149,9 +151,9 @@ protected:
 		// Descriptor pool sizes
 		/* A16 -- OK */
 		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 16;
-		texturesInPool = 16;
-		setsInPool = 16;
+		uniformBlocksInPool = 20;
+		texturesInPool = 20;
+		setsInPool = 20;
 
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -258,6 +260,7 @@ protected:
 			  {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, color),
 					 sizeof(glm::vec3), COLOR},
 			});
+
 		// Pipelines [Shader couples]
 		// The second parameter is the pointer to the vertex definition
 		// Third and fourth parameters are respectively the vertex and fragment shaders
@@ -287,6 +290,7 @@ protected:
 
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
 
+		MCeilingLamp1.init(this, &VMesh, "Models/LampBlack.obj",OBJ);
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -302,6 +306,7 @@ protected:
 		TFloor.init(this, "textures/RoomTextures/Floor.jpg");
 		NeoGeoCabinetT1.init(this, "textures/NeoGeoCabinet/DM.jpg");
 		NeoGeoCabinetT2.init(this, "textures/NeoGeoCabinet/NM.jpg");
+		TCeilingLamp1.init(this, "textures/RoomTextures/CeilingLampTexture.jpg");
 
 		// Init local variables
 		alpha = glm::radians(180.0f);
@@ -354,6 +359,11 @@ protected:
 		DSGubo.init(this, &DSLGubo, {
 					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 			});
+
+		DSCeilingLamp1.init(this, &DSLMesh, {
+					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+					{1, TEXTURE, 0, &TCeilingLamp1}
+			});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -375,6 +385,8 @@ protected:
 		DSCeiling.cleanup();
 		DSFloor.cleanup();
 		DSGubo.cleanup();
+
+		DSCeilingLamp1.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -391,6 +403,7 @@ protected:
 		TRoom1.cleanup();
 		TCeiling.cleanup();
 		TFloor.cleanup();
+		TCeilingLamp1.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
@@ -401,6 +414,7 @@ protected:
 		MRoom1.cleanup();
 		MCeiling.cleanup();
 		MFloor.cleanup();
+		MCeilingLamp1.cleanup();
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
 		DSLOverlay.cleanup();
@@ -482,6 +496,10 @@ protected:
 		//DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
 		//vkCmdDrawIndexed(commandBuffer,
 		//		static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
+		MCeilingLamp1.bind(commandBuffer);
+		DSCeilingLamp1.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
 
 
 		POverlay.bind(commandBuffer);
@@ -665,6 +683,12 @@ protected:
 		DSFloor.map(currentImage, &uboFloor, sizeof(uboFloor), 0);
 
 
+		World = glm::mat4(1);
+		uboCeilingLamp1.amb = 1.0f; uboCeilingLamp1.gamma = 180.0f; uboCeilingLamp1.sColor = glm::vec3(1.0f);
+		uboCeilingLamp1.mvpMat = Prj * View * World;
+		uboCeilingLamp1.mMat = World;
+		uboCeilingLamp1.nMat = glm::inverse(glm::transpose(World));
+		DSCeilingLamp1.map(currentImage, &uboCeilingLamp1, sizeof(uboCeilingLamp1), 0);
 	}
 };
 
