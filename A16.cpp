@@ -32,6 +32,11 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec3 eyePos;
 	alignas(16) glm::vec3 PLightPos;
 	alignas(16) glm::vec4 PLightColor;
+	alignas(16) glm::vec3 PLightPos2;
+	alignas(16) glm::vec4 PLightColor2;
+	alignas(16) glm::vec3 SLightPos;
+	alignas(16) glm::vec3 SLightDir;
+	alignas(16) glm::vec4 SLightColor;
 };
 
 // The vertices data structures
@@ -590,13 +595,18 @@ protected:
 		}
 		GameLogic();
 
-
 		gubo.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
 		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.AmbLightColor = glm::vec3(0.1f);
+		gubo.AmbLightColor = glm::vec3(0.05f);
 		gubo.eyePos = Pos;
-		gubo.PLightPos = glm::vec3(1.0f, 3.0f, -1.0f);
-		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.PLightPos = glm::vec3(3.0f, 3.0f, -4.0f);
+		gubo.PLightColor = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); <-- turn off light
+		gubo.PLightPos2 = glm::vec3(11.0f, 3.0f, -4.0f);
+		gubo.PLightColor2 = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
+		gubo.SLightColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		gubo.SLightPos = glm::vec3(11.0f, 1.0f, 1.0f);
 
 		// Writes value to the GPU
 		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
@@ -657,6 +667,7 @@ protected:
 
 	}
 };
+
 
 
 // This is the main: probably you do not need to touch this!
