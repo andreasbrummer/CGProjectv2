@@ -102,27 +102,27 @@ protected:
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet1, MRoom1, MCeiling, MFloor, MNeoGeoCabinet;
+	Model<VertexMesh> MCabinet1, MRoom1, MDecoration, MCeiling, MFloor, MNeoGeoCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
 	//Model<VertexVColor> MRoom;
 	Model<VertexSimple> MPoolTable,MSnackMachine;
-	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2;
+	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2, MPoolLamp;
 	Model<VertexOverlay> MKey;
 
-	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolTable,DSSnackMachine;
+	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
-	DescriptorSet DSRoom1, DSCeiling, DSFloor;
-	Texture T1, T2, T3, TRoom1, TCeiling, TFloor;
+	DescriptorSet DSRoom1, DSDecoration, DSCeiling, DSFloor;
+	Texture T1, T2, T3, TRoom1, TDecoration, TCeiling, TFloor;
 	Texture NeoGeoCabinetT1, NeoGeoCabinetT2;
-	Texture TCeilingLamp1, TCeilingLamp2, TForniture;
+	Texture TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture;
 
 	// C++ storage for uniform variables
 	UniformBlockSimple uboPoolTable,uboSnackMachine;
-	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2;
+	MeshUniformBlock uboCabinet1, uboRoom1, uboDecoration, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2, uboPoolLamp;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -316,16 +316,19 @@ protected:
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
 		MRoom1.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
+		MDecoration.init(this, &VMesh, "Models/Decoration.obj", OBJ);
 
 		MCeiling.init(this, &VMesh, "Models/CeilingV3.obj", OBJ);
 
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
 
-		MCeilingLamp1.init(this, &VMesh, "Models/untitled11.obj",OBJ);
-		MCeilingLamp2.init(this, &VMesh, "Models/untitled11.obj", OBJ);
+		MCeilingLamp1.init(this, &VMesh, "Models/LampReverseN.obj",OBJ);
+		MCeilingLamp2.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
+		MPoolLamp.init(this, &VMesh, "Models/LampPoolFinal.obj", OBJ);
 
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
-		MSnackMachine.init(this, &VSimple, "Models/SnackMachine.mgcg", MGCG);
+		MSnackMachine.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
+		
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -335,12 +338,14 @@ protected:
 		T2.init(this, "textures/DefenderTextures/Material.001_metallicRoughness.png");
 		T3.init(this, "textures/DefenderTextures/Material.001_normal.png");
 		TRoom1.init(this, "textures/RoomTextures/ArcadeWalls.jpg");
+		TDecoration.init(this, "textures/RoomTextures/Decoration.jpg");
 		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
 		TFloor.init(this, "textures/RoomTextures/Floor.jpg");
 		NeoGeoCabinetT1.init(this, "textures/NeoGeoCabinet/DM.jpg");
 		NeoGeoCabinetT2.init(this, "textures/NeoGeoCabinet/NM.jpg");
 		TCeilingLamp1.init(this, "textures/white.png");
 		TCeilingLamp2.init(this, "textures/white.png");
+		TPoolLamp.init(this, "textures/grey.png");
 		TForniture.init(this, "textures/Textures_Forniture.png");
 		// Init local variables
 		alpha = glm::radians(180.0f);
@@ -378,10 +383,16 @@ protected:
 			});
 		*/
 
-		DSRoom1.init(this, &DSLMesh, {
+		DSRoom1.init(this, &DSLCabinet, {
 				{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
-				{1, TEXTURE, 0, &TRoom1}
+				{1, TEXTURE, 0, &TRoom1},
 		});
+
+		DSDecoration.init(this, &DSLCabinet, {
+				{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+				{1, TEXTURE, 0, &TDecoration},
+			});
+
 		DSCeiling.init(this, &DSLMesh, {
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeiling}
@@ -403,6 +414,11 @@ protected:
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeilingLamp2}
 		});
+
+		DSPoolLamp.init(this, &DSLMesh, {
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TPoolLamp}
+			});
 
 		DSPoolTable.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
@@ -432,6 +448,7 @@ protected:
 		/* A16 -- OK */
 		/* cleanup the dataset for the room */
 		DSRoom1.cleanup();
+		DSDecoration.cleanup();
 		//DSRoom.cleanup();
 		DSCeiling.cleanup();
 		DSFloor.cleanup();
@@ -439,6 +456,7 @@ protected:
 
 		DSCeilingLamp1.cleanup();
 		DSCeilingLamp2.cleanup();
+		DSPoolLamp.cleanup();
 		DSPoolTable.cleanup();
 	}
 
@@ -454,10 +472,12 @@ protected:
 		NeoGeoCabinetT1.cleanup();
 		NeoGeoCabinetT2.cleanup();
 		TRoom1.cleanup();
+		TDecoration.cleanup();
 		TCeiling.cleanup();
 		TFloor.cleanup();
 		TCeilingLamp1.cleanup();
 		TCeilingLamp2.cleanup();
+		TPoolLamp.cleanup();
 		TForniture.cleanup();
 
 		// Cleanup models
@@ -467,10 +487,12 @@ protected:
 		/* Cleanup the mesh for the room */
 		//MRoom.cleanup();
 		MRoom1.cleanup();
+		MDecoration.cleanup();
 		MCeiling.cleanup();
 		MFloor.cleanup();
 		MCeilingLamp1.cleanup();
 		MCeilingLamp2.cleanup();
+		MPoolLamp.cleanup();
 		MPoolTable.cleanup();
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -537,6 +559,12 @@ protected:
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
 
+		MDecoration.bind(commandBuffer);
+		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+		DSDecoration.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MDecoration.indices.size()), 1, 0, 0, 0);
+
 		MCeiling.bind(commandBuffer);
 		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 		DSCeiling.bind(commandBuffer, PMesh, 1, currentImage);
@@ -559,10 +587,16 @@ protected:
 		DSCeilingLamp1.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
+
 		MCeilingLamp2.bind(commandBuffer);
 		DSCeilingLamp2.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
+
+		MPoolLamp.bind(commandBuffer);
+		DSPoolLamp.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
 		PVColor.bind(commandBuffer);
 
@@ -694,14 +728,14 @@ protected:
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
 		gubo.eyePos = Pos;
 		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
-		gubo.PLightColor = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
 		//gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		gubo.PLightColor2 = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
 		gubo.SLightColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		gubo.SLightPos = glm::vec3(11.0f, 1.0f, 1.0f);
+		gubo.SLightPos = glm::vec3(9.5f, 1.0f, 1.0f);
 
 		// Writes value to the GPU
 		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
@@ -746,6 +780,13 @@ protected:
 		DSRoom1.map(currentImage, &uboRoom1, sizeof(uboRoom1), 0);
 
 		World = glm::mat4(1);
+		uboDecoration.amb = 1.0f; uboDecoration.gamma = 180.0f; uboDecoration.sColor = glm::vec3(1.0f);
+		uboDecoration.mvpMat = Prj * View * World;
+		uboDecoration.mMat = World;
+		uboDecoration.nMat = glm::inverse(glm::transpose(World));
+		DSDecoration.map(currentImage, &uboDecoration, sizeof(uboDecoration), 0);
+
+		World = glm::mat4(1);
 		uboCeiling.amb = 1.0f; uboCeiling.gamma = 180.0f; uboCeiling.sColor = glm::vec3(1.0f);
 		uboCeiling.mvpMat = Prj * View * World;
 		uboCeiling.mMat = World;
@@ -760,21 +801,28 @@ protected:
 		DSFloor.map(currentImage, &uboFloor, sizeof(uboFloor), 0);
 
 
-		World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.97f, -4.0f)) * glm::rotate(glm::mat4(1.0), glm::radians(180.0f), glm::vec3(0, 0, 1)) * 
-			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.3f, 0.15f));
+		World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.97f, -4.0f)) * 
+			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
 		uboCeilingLamp1.amb = 1.0f; uboCeilingLamp1.gamma = 180.0f; uboCeilingLamp1.sColor = glm::vec3(1.0f);
 		uboCeilingLamp1.mvpMat = Prj * View * World;
 		uboCeilingLamp1.mMat = World;
 		uboCeilingLamp1.nMat = glm::inverse(glm::transpose(World));
 		DSCeilingLamp1.map(currentImage, &uboCeilingLamp1, sizeof(uboCeilingLamp1), 0);
 
-		World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.97f, -4.0f)) * glm::rotate(glm::mat4(1.0), glm::radians(180.0f), glm::vec3(0, 0, 1)) *
-			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.3f, 0.15f));
+		World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.97f, -4.0f)) *
+			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
 		uboCeilingLamp2.amb = 1.0f; uboCeilingLamp2.gamma = 180.0f; uboCeilingLamp2.sColor = glm::vec3(1.0f);
 		uboCeilingLamp2.mvpMat = Prj * View * World;
 		uboCeilingLamp2.mMat = World;
 		uboCeilingLamp2.nMat = glm::inverse(glm::transpose(World));
 		DSCeilingLamp2.map(currentImage, &uboCeilingLamp2, sizeof(uboCeilingLamp2), 0);
+
+		World = translate(glm::mat4(1.0), glm::vec3(10.0f, 1.0f, 0.0f));
+		uboPoolLamp.amb = 1.0f; uboPoolLamp.gamma = 180.0f; uboPoolLamp.sColor = glm::vec3(1.0f);
+		uboPoolLamp.mvpMat = Prj * View * World;
+		uboPoolLamp.mMat = World;
+		uboPoolLamp.nMat = glm::inverse(glm::transpose(World));
+		DSPoolLamp.map(currentImage, &uboPoolLamp, sizeof(uboPoolLamp), 0);
 
 		World = rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0)) * translate(glm::mat4(1.0), glm::vec3(-1.0f, 0.0f, 10.0f)) *
 			glm::scale(glm::mat4(1), glm::vec3(2.0f));
