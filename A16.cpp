@@ -102,7 +102,7 @@ protected:
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet1, MRoom1, MDecoration, MCeiling, MFloor, MNeoGeoCabinet;
+	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom1, MDecoration, MCeiling, MFloor, MNeoGeoCabinet;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
@@ -111,18 +111,18 @@ protected:
 	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2, MPoolLamp;
 	Model<VertexOverlay> MKey;
 
-	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine;
+	DescriptorSet DSGubo, DSCabinet, DSCabinet2, DSAsteroids,DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
 	DescriptorSet DSRoom1, DSDecoration, DSCeiling, DSFloor;
-	Texture T1, T2, T3, TRoom1, TDecoration, TCeiling, TFloor;
+	Texture T1, T2, T3, TRoom1, TDecoration, TCeiling, TFloor,TAsteroids1,TAsteroids2,TAsteroids3;
 	Texture NeoGeoCabinetT1, NeoGeoCabinetT2;
 	Texture TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture;
 
 	// C++ storage for uniform variables
 	UniformBlockSimple uboPoolTable,uboSnackMachine;
-	MeshUniformBlock uboCabinet1, uboRoom1, uboDecoration, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2, uboPoolLamp;
+	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom1, uboDecoration, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2, uboPoolLamp;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -303,7 +303,7 @@ protected:
 		/* Create the new pipeline, using shaders "VColorVert.spv" and "VColorFrag.spv" */
 		PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", { &DSLGubo, &DSLVColor });
 
-		PSimple.init(this, &VSimple, "shaders/shaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
+		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
 		// Create models
@@ -311,6 +311,8 @@ protected:
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
 		MCabinet1.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
+        MCabinet2.init(this,&VMesh,"Models/Cabinet.obj",OBJ );
+        MAsteroids.init(this,&VMesh,"Models/Asteroids.obj",OBJ);
 		MNeoGeoCabinet.init(this, &VMesh, "Models/neoGeoCabinet.obj", OBJ);
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
@@ -327,7 +329,7 @@ protected:
 		MPoolLamp.init(this, &VMesh, "Models/LampPoolFinal.obj", OBJ);
 
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
-		MSnackMachine.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
+		MSnackMachine.init(this, &VSimple, "Models/SnackMachine.mgcg", MGCG);
 		
 
 		// Creates a mesh with direct enumeration of vertices and indices
@@ -345,8 +347,12 @@ protected:
 		NeoGeoCabinetT2.init(this, "textures/NeoGeoCabinet/NM.jpg");
 		TCeilingLamp1.init(this, "textures/white.png");
 		TCeilingLamp2.init(this, "textures/white.png");
-		TPoolLamp.init(this, "textures/grey.png");
+		TPoolLamp.init(this, "textures/Grey.png");
 		TForniture.init(this, "textures/Textures_Forniture.png");
+        TAsteroids1.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
+        TAsteroids2.init(this,"textures/AsteroidsTextures/Material.001_metallicRoughness.png");
+        TAsteroids3.init(this,"textures/AsteroidsTextures/Material.001_normal.png");
+
 		// Init local variables
 		alpha = glm::radians(180.0f);
 		beta = 0.0f;
@@ -369,6 +375,20 @@ protected:
 			{3, TEXTURE, 0, &T3}
 
 		});
+        DSCabinet2.init(this, &DSLCabinet, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &T1},
+                {2, TEXTURE, 0, &T2},
+                {3, TEXTURE, 0, &T3}
+
+        });
+        DSAsteroids.init(this, &DSLCabinet, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TAsteroids1},
+                {2, TEXTURE, 0, &TAsteroids2},
+                {3, TEXTURE, 0, &TAsteroids3}
+
+        });
 
 		DSNeoGeoCabinet.init(this, &DSLNeoGeoCabinet, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -444,6 +464,8 @@ protected:
 		PSimple.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
+        DSCabinet2.cleanup();
+        DSAsteroids.cleanup();
 		DSNeoGeoCabinet.cleanup();
 		/* A16 -- OK */
 		/* cleanup the dataset for the room */
@@ -479,9 +501,14 @@ protected:
 		TCeilingLamp2.cleanup();
 		TPoolLamp.cleanup();
 		TForniture.cleanup();
+        TAsteroids1.cleanup();
+        TAsteroids2.cleanup();
+        TAsteroids3.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
+        MCabinet2.cleanup();
+        MAsteroids.cleanup();
 		MNeoGeoCabinet.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the mesh for the room */
@@ -547,6 +574,14 @@ protected:
 		DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MCabinet1.indices.size()), 1, 0, 0, 0);
+        MCabinet2.bind(commandBuffer);
+        DSCabinet2.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MCabinet2.indices.size()), 1, 0, 0, 0);
+        MAsteroids.bind(commandBuffer);
+        DSAsteroids.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MAsteroids.indices.size()), 1, 0, 0, 0);
 
 		MNeoGeoCabinet.bind(commandBuffer);
 		DSNeoGeoCabinet.bind(commandBuffer, PMesh, 1, currentImage);
@@ -744,13 +779,29 @@ protected:
 		// the third parameter is its size
 		// the fourth parameter is the location inside the descriptor set of this uniform block
 
-		World = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 0.0f, -1.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
+		World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -1.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
 
 		uboCabinet1.amb = 1.0f; uboCabinet1.gamma = 180.0f; uboCabinet1.sColor = glm::vec3(1.0f);
 		uboCabinet1.mvpMat = Prj * View * World;
 		uboCabinet1.mMat = World;
 		uboCabinet1.nMat = glm::inverse(glm::transpose(World));
 		DSCabinet.map(currentImage, &uboCabinet1, sizeof(uboCabinet1), 0);
+
+        World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -9.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+        uboCabinet2.amb = 1.0f; uboCabinet2.gamma = 180.0f; uboCabinet2.sColor = glm::vec3(1.0f);
+        uboCabinet2.mvpMat = Prj * View * World;
+        uboCabinet2.mMat = World;
+        uboCabinet2.nMat = glm::inverse(glm::transpose(World));
+        DSCabinet2.map(currentImage, &uboCabinet2, sizeof(uboCabinet2), 0);
+
+        World = glm::translate(glm::mat4(1.0), glm::vec3(0.8, 0.75f, -7.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+        uboAsteroids.amb = 1.0f; uboAsteroids.gamma = 180.0f; uboAsteroids.sColor = glm::vec3(1.0f);
+        uboAsteroids.mvpMat = Prj * View * World;
+        uboAsteroids.mMat = World;
+        uboAsteroids.nMat = glm::inverse(glm::transpose(World));
+        DSAsteroids.map(currentImage, &uboAsteroids, sizeof(uboAsteroids), 0);
 
 		World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
 			glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) * glm::scale(glm::mat4(1), glm::vec3(0.0065f));
