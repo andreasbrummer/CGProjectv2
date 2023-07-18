@@ -21,6 +21,10 @@ struct MeshUniformBlock {
 	alignas(16) glm::mat4 nMat;
 };
 
+struct UniformBlockSimple {
+	alignas(16) glm::mat4 mvpMat;
+};
+
 struct OverlayUniformBlock {
 	alignas(4) float visible;
 };
@@ -51,6 +55,11 @@ struct VertexOverlay {
 	glm::vec2 UV;
 };
 
+struct VertexSimple {
+	glm::vec3 pos;
+	glm::vec2 UV;
+};
+
 /* A16 -- OK */
 /* Add the C++ datastructure for the required vertex format */
 struct VertexVColor {
@@ -71,7 +80,7 @@ protected:
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLCabinet, DSLNeoGeoCabinet;
+	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLCabinet, DSLNeoGeoCabinet, DSLSimple;
 	/* A16 -- OK */
 	/* Add the variable that will contain the required Descriptor Set Layout */
 	DescriptorSetLayout DSLVColor;
@@ -79,6 +88,7 @@ protected:
 	// Vertex formats
 	VertexDescriptor VMesh;
 	VertexDescriptor VOverlay;
+	VertexDescriptor VSimple;
 	/* A16 -- OK */
 	/* Add the variable that will contain the required Vertex format definition */
 	VertexDescriptor VVColor;
@@ -86,6 +96,7 @@ protected:
 	// Pipelines [Shader couples]
 	Pipeline PMesh;
 	Pipeline POverlay;
+	Pipeline PSimple;
 	/* A16 -- OK */
 	/* Add the variable that will contain the new pipeline */
 	Pipeline PVColor;
@@ -96,7 +107,8 @@ protected:
 	/* Add the variable that will contain the model for the room */
 
 	//Model<VertexVColor> MRoom;
-	Model<VertexMesh> MCeilingLamp1,MPoolTable;
+	Model<VertexMesh> MCeilingLamp1;
+	Model<VertexSimple> MPoolTable;
 	Model<VertexOverlay> MKey;
 
 	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1,DSPoolTable;
@@ -109,7 +121,8 @@ protected:
 	Texture TCeilingLamp1,TForniture;
 
 	// C++ storage for uniform variables
-	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet,uboCeilingLamp1,uboPoolTable;
+	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet,uboCeilingLamp1;
+	UniformBlockSimple uboPoolTable;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -134,7 +147,7 @@ protected:
 	float jumpVelocity = 0.0f;      // Initial jump velocity
 	float jumpHeight = 2.0f;        // Height the player can reach during the jump
 	float gravity = 9.8f;           // Acceleration due to gravity
-	float maxJumpTime = 1.0f;       // Maximum duration of the jump
+	float maxJumpTime = 1.3f;       // Maximum duration of the jump
 	float jumpTime = 0.0f;          // Current time elapsed during the jump
 
 
@@ -202,6 +215,11 @@ protected:
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 			});
 
+		DSLSimple.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			});
+
 		// Vertex descriptors
 		VMesh.init(this, {
 			// this array contains the bindings
@@ -259,6 +277,18 @@ protected:
 			  {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, color),
 					 sizeof(glm::vec3), COLOR},
 			});
+		
+		//VOverlay MISSING!!!!!
+
+		VSimple.init(this, {
+				  {0, sizeof(VertexSimple), VK_VERTEX_INPUT_RATE_VERTEX}
+			}, {
+			  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSimple, pos),
+					 sizeof(glm::vec3), POSITION},
+			  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexSimple, UV),
+					 sizeof(glm::vec2), UV}
+			});
+
 
 		// Pipelines [Shader couples]
 		// The second parameter is the pointer to the vertex definition
@@ -272,6 +302,8 @@ protected:
 		/* A16 -- OK */
 		/* Create the new pipeline, using shaders "VColorVert.spv" and "VColorFrag.spv" */
 		PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", { &DSLGubo, &DSLVColor });
+
+		PSimple.init(this, &VSimple, "shaders/shaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
 		// Create models
@@ -291,7 +323,7 @@ protected:
 
 		MCeilingLamp1.init(this, &VMesh, "Models/untitled11.obj",OBJ);
 
-		MPoolTable.init(this, &VMesh, "Models/poolTable.mgcg", MGCG);
+		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -319,6 +351,7 @@ protected:
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
 		POverlay.create();
+		PSimple.create();
 		/* A16 -- OK */
 		/* Create the new pipeline */
 		PVColor.create();
@@ -366,8 +399,8 @@ protected:
 			{1, TEXTURE, 0, &TCeilingLamp1}
 			});
 
-		DSPoolTable.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+		DSPoolTable.init(this, &DSLSimple, {
+					{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
 			{1, TEXTURE, 0, &TForniture}
 			});
 	}
@@ -381,6 +414,7 @@ protected:
 		/* A16 -- OK */
 		/* cleanup the new pipeline */
 		PVColor.cleanup();
+		PSimple.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
 		DSNeoGeoCabinet.cleanup();
@@ -435,12 +469,14 @@ protected:
 		DSLCabinet.cleanup();
 		DSLNeoGeoCabinet.cleanup();
 
+		DSLSimple.cleanup();
 		// Destroies the pipelines
 		PMesh.destroy();
 		POverlay.destroy();
 		/* A16 -- OK */
 		/* Destroy the new pipeline */
 		PVColor.destroy();
+		PSimple.destroy();
 	}
 
 	// Here it is the creation of the command buffer:
@@ -510,9 +546,9 @@ protected:
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
 
-		PVColor.bind(commandBuffer);
+		PSimple.bind(commandBuffer);
+		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
 		MPoolTable.bind(commandBuffer);
-		DSPoolTable.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
 
@@ -704,11 +740,9 @@ protected:
 		uboCeilingLamp1.nMat = glm::inverse(glm::transpose(World));
 		DSCeilingLamp1.map(currentImage, &uboCeilingLamp1, sizeof(uboCeilingLamp1), 0);
 
-		World = glm::mat4(1);
-		uboPoolTable.amb = 1.0f; uboPoolTable.gamma = 180.0f; uboPoolTable.sColor = glm::vec3(1.0f);
+		World = rotate(glm::mat4(1.0f),glm::radians(90.0f),glm::vec3(0,1,0)) *translate(glm::mat4(1.0), glm::vec3(-1.0f, 0.0f, 10.0f)) *
+			glm::scale(glm::mat4(1), glm::vec3(2.0f));
 		uboPoolTable.mvpMat = Prj * View * World;
-		uboPoolTable.mMat = World;
-		uboPoolTable.nMat = glm::inverse(glm::transpose(World));
 		DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
 	}
 };
