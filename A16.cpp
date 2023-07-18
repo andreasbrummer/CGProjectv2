@@ -107,11 +107,11 @@ protected:
 	/* Add the variable that will contain the model for the room */
 
 	//Model<VertexVColor> MRoom;
-	Model<VertexSimple> MPoolTable;
+	Model<VertexSimple> MPoolTable,MSnackMachine;
 	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2;
 	Model<VertexOverlay> MKey;
 
-	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolTable;
+	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolTable,DSSnackMachine;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
@@ -121,7 +121,7 @@ protected:
 	Texture TCeilingLamp1, TCeilingLamp2, TForniture;
 
 	// C++ storage for uniform variables
-	UniformBlockSimple uboPoolTable;
+	UniformBlockSimple uboPoolTable,uboSnackMachine;
 	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
@@ -325,7 +325,7 @@ protected:
 		MCeilingLamp2.init(this, &VMesh, "Models/untitled11.obj", OBJ);
 
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
-
+		MSnackMachine.init(this, &VSimple, "Models/SnackMachine.mgcg", MGCG);
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -405,6 +405,11 @@ protected:
 		});
 
 		DSPoolTable.init(this, &DSLSimple, {
+			{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
+			{1, TEXTURE, 0, &TForniture}
+		});
+
+		DSSnackMachine.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
 			{1, TEXTURE, 0, &TForniture}
 		});
@@ -567,6 +572,11 @@ protected:
 		PSimple.bind(commandBuffer);
 		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
 		MPoolTable.bind(commandBuffer);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
+
+		DSSnackMachine.bind(commandBuffer, PSimple, 0, currentImage);
+		MSnackMachine.bind(commandBuffer);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
 
@@ -770,6 +780,11 @@ protected:
 			glm::scale(glm::mat4(1), glm::vec3(2.0f));
 		uboPoolTable.mvpMat = Prj * View * World;
 		DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
+
+		World = rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) * translate(glm::mat4(1.0), glm::vec3(14.0f, 0.0f, -9.7f)) *
+			glm::scale(glm::mat4(1), glm::vec3(2.0f));
+		uboSnackMachine.mvpMat = Prj * View * World;
+		DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
 
 	}
 };
