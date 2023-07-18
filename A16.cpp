@@ -107,9 +107,8 @@ protected:
 	/* Add the variable that will contain the model for the room */
 
 	//Model<VertexVColor> MRoom;
-	Model<VertexMesh> MCeilingLamp1;
 	Model<VertexSimple> MPoolTable;
-	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2, MPoolTable;
+	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2;
 	Model<VertexOverlay> MKey;
 
 	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolTable;
@@ -122,9 +121,8 @@ protected:
 	Texture TCeilingLamp1, TCeilingLamp2, TForniture;
 
 	// C++ storage for uniform variables
-	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet,uboCeilingLamp1;
 	UniformBlockSimple uboPoolTable;
-	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2, uboPoolTable;
+	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -324,13 +322,10 @@ protected:
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
 
 		MCeilingLamp1.init(this, &VMesh, "Models/untitled11.obj",OBJ);
-
-		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
 		MCeilingLamp2.init(this, &VMesh, "Models/untitled11.obj", OBJ);
 
-		MPoolTable.init(this, &VMesh, "Models/poolTable.mgcg", MGCG);
+		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
 
-		// Creates a mesh with direct enumeration of vertices and indices
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -363,18 +358,18 @@ protected:
 		PVColor.create();
 		// Here you define the data set
 		DSCabinet.init(this, &DSLCabinet, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &T1},
-					{2, TEXTURE, 0, &T2},
-					{3, TEXTURE, 0, &T3}
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &T1},
+			{2, TEXTURE, 0, &T2},
+			{3, TEXTURE, 0, &T3}
 
-			});
+		});
 
 		DSNeoGeoCabinet.init(this, &DSLNeoGeoCabinet, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &NeoGeoCabinetT1},
-					{2, TEXTURE, 0, &NeoGeoCabinetT2}
-			});
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &NeoGeoCabinetT1},
+			{2, TEXTURE, 0, &NeoGeoCabinetT2}
+		});
 		/* A16 -- OK */
 		/* Define the data set for the room */
 		/*
@@ -386,36 +381,34 @@ protected:
 		DSRoom1.init(this, &DSLMesh, {
 				{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 				{1, TEXTURE, 0, &TRoom1}
-			});
+		});
 		DSCeiling.init(this, &DSLMesh, {
-		{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
-		{1, TEXTURE, 0, &TCeiling}
-			});
+			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TCeiling}
+		});
 		DSFloor.init(this, &DSLMesh, {
-		{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
-		{1, TEXTURE, 0, &TFloor}
-			});
+			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TFloor}
+		});
 
 		DSGubo.init(this, &DSLGubo, {
-					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
-			});
+			{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
+		});
 
 		DSCeilingLamp1.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeilingLamp1}
-			});
+		});
+		DSCeilingLamp2.init(this, &DSLMesh, {
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TCeilingLamp2}
+		});
 
 		DSPoolTable.init(this, &DSLSimple, {
-					{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
-		DSCeilingLamp2.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeilingLamp2}
-			});
-
-		DSPoolTable.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
 			{1, TEXTURE, 0, &TForniture}
-			});
+		});
+
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -561,20 +554,21 @@ protected:
 		DSCeilingLamp1.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
-
-		PSimple.bind(commandBuffer);
-		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
 		MCeilingLamp2.bind(commandBuffer);
 		DSCeilingLamp2.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
 
 		PVColor.bind(commandBuffer);
-		MPoolTable.bind(commandBuffer);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
+
 
 		POverlay.bind(commandBuffer);
+
+		PSimple.bind(commandBuffer);
+		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
+		MPoolTable.bind(commandBuffer);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
 
 	}
 
@@ -764,8 +758,6 @@ protected:
 		uboCeilingLamp1.nMat = glm::inverse(glm::transpose(World));
 		DSCeilingLamp1.map(currentImage, &uboCeilingLamp1, sizeof(uboCeilingLamp1), 0);
 
-		World = rotate(glm::mat4(1.0f),glm::radians(90.0f),glm::vec3(0,1,0)) *translate(glm::mat4(1.0), glm::vec3(-1.0f, 0.0f, 10.0f)) *
-			glm::scale(glm::mat4(1), glm::vec3(2.0f));
 		World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.97f, -4.0f)) * glm::rotate(glm::mat4(1.0), glm::radians(180.0f), glm::vec3(0, 0, 1)) *
 			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.3f, 0.15f));
 		uboCeilingLamp2.amb = 1.0f; uboCeilingLamp2.gamma = 180.0f; uboCeilingLamp2.sColor = glm::vec3(1.0f);
@@ -774,10 +766,11 @@ protected:
 		uboCeilingLamp2.nMat = glm::inverse(glm::transpose(World));
 		DSCeilingLamp2.map(currentImage, &uboCeilingLamp2, sizeof(uboCeilingLamp2), 0);
 
-		World = glm::mat4(1);
-		uboPoolTable.amb = 1.0f; uboPoolTable.gamma = 180.0f; uboPoolTable.sColor = glm::vec3(1.0f);
+		World = rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0)) * translate(glm::mat4(1.0), glm::vec3(-1.0f, 0.0f, 10.0f)) *
+			glm::scale(glm::mat4(1), glm::vec3(2.0f));
 		uboPoolTable.mvpMat = Prj * View * World;
 		DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
+
 	}
 };
 
