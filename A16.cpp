@@ -109,20 +109,22 @@ protected:
 	//Model<VertexVColor> MRoom;
 	Model<VertexMesh> MCeilingLamp1;
 	Model<VertexSimple> MPoolTable;
+	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2, MPoolTable;
 	Model<VertexOverlay> MKey;
 
-	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1,DSPoolTable;
+	DescriptorSet DSGubo, DSCabinet, DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolTable;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
 	DescriptorSet DSRoom1, DSCeiling, DSFloor;
 	Texture T1, T2, T3, TRoom1, TCeiling, TFloor;
 	Texture NeoGeoCabinetT1, NeoGeoCabinetT2;
-	Texture TCeilingLamp1,TForniture;
+	Texture TCeilingLamp1, TCeilingLamp2, TForniture;
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet,uboCeilingLamp1;
 	UniformBlockSimple uboPoolTable;
+	MeshUniformBlock uboCabinet1, uboRoom1, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2, uboPoolTable;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -324,6 +326,9 @@ protected:
 		MCeilingLamp1.init(this, &VMesh, "Models/untitled11.obj",OBJ);
 
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
+		MCeilingLamp2.init(this, &VMesh, "Models/untitled11.obj", OBJ);
+
+		MPoolTable.init(this, &VMesh, "Models/poolTable.mgcg", MGCG);
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -340,6 +345,7 @@ protected:
 		NeoGeoCabinetT1.init(this, "textures/NeoGeoCabinet/DM.jpg");
 		NeoGeoCabinetT2.init(this, "textures/NeoGeoCabinet/NM.jpg");
 		TCeilingLamp1.init(this, "textures/white.png");
+		TCeilingLamp2.init(this, "textures/white.png");
 		TForniture.init(this, "textures/Textures_Forniture.png");
 		// Init local variables
 		alpha = glm::radians(180.0f);
@@ -401,6 +407,13 @@ protected:
 
 		DSPoolTable.init(this, &DSLSimple, {
 					{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
+		DSCeilingLamp2.init(this, &DSLMesh, {
+					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TCeilingLamp2}
+			});
+
+		DSPoolTable.init(this, &DSLMesh, {
+					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TForniture}
 			});
 	}
@@ -427,6 +440,7 @@ protected:
 		DSGubo.cleanup();
 
 		DSCeilingLamp1.cleanup();
+		DSCeilingLamp2.cleanup();
 		DSPoolTable.cleanup();
 	}
 
@@ -445,6 +459,7 @@ protected:
 		TCeiling.cleanup();
 		TFloor.cleanup();
 		TCeilingLamp1.cleanup();
+		TCeilingLamp2.cleanup();
 		TForniture.cleanup();
 
 		// Cleanup models
@@ -457,6 +472,7 @@ protected:
 		MCeiling.cleanup();
 		MFloor.cleanup();
 		MCeilingLamp1.cleanup();
+		MCeilingLamp2.cleanup();
 		MPoolTable.cleanup();
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -548,6 +564,12 @@ protected:
 
 		PSimple.bind(commandBuffer);
 		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
+		MCeilingLamp2.bind(commandBuffer);
+		DSCeilingLamp2.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
+
+		PVColor.bind(commandBuffer);
 		MPoolTable.bind(commandBuffer);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
@@ -665,12 +687,13 @@ protected:
 
 		gubo.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
 		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.AmbLightColor = glm::vec3(1.0f); //0.05f
+		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
 		gubo.eyePos = Pos;
-		gubo.PLightPos = glm::vec3(3.0f, 1.0f, -4.0f);
+		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
 		gubo.PLightColor = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); <-- turn off light
-		gubo.PLightPos2 = glm::vec3(11.0f, 3.0f, -4.0f);
+		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
+		//gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.PLightColor2 = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
 		gubo.SLightColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -733,7 +756,8 @@ protected:
 		DSFloor.map(currentImage, &uboFloor, sizeof(uboFloor), 0);
 
 
-		World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.9f, -4.0f)) *glm::scale(glm::mat4(1), glm::vec3(0.1f));
+		World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.97f, -4.0f)) * glm::rotate(glm::mat4(1.0), glm::radians(180.0f), glm::vec3(0, 0, 1)) * 
+			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.3f, 0.15f));
 		uboCeilingLamp1.amb = 1.0f; uboCeilingLamp1.gamma = 180.0f; uboCeilingLamp1.sColor = glm::vec3(1.0f);
 		uboCeilingLamp1.mvpMat = Prj * View * World;
 		uboCeilingLamp1.mMat = World;
@@ -742,6 +766,16 @@ protected:
 
 		World = rotate(glm::mat4(1.0f),glm::radians(90.0f),glm::vec3(0,1,0)) *translate(glm::mat4(1.0), glm::vec3(-1.0f, 0.0f, 10.0f)) *
 			glm::scale(glm::mat4(1), glm::vec3(2.0f));
+		World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.97f, -4.0f)) * glm::rotate(glm::mat4(1.0), glm::radians(180.0f), glm::vec3(0, 0, 1)) *
+			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.3f, 0.15f));
+		uboCeilingLamp2.amb = 1.0f; uboCeilingLamp2.gamma = 180.0f; uboCeilingLamp2.sColor = glm::vec3(1.0f);
+		uboCeilingLamp2.mvpMat = Prj * View * World;
+		uboCeilingLamp2.mMat = World;
+		uboCeilingLamp2.nMat = glm::inverse(glm::transpose(World));
+		DSCeilingLamp2.map(currentImage, &uboCeilingLamp2, sizeof(uboCeilingLamp2), 0);
+
+		World = glm::mat4(1);
+		uboPoolTable.amb = 1.0f; uboPoolTable.gamma = 180.0f; uboPoolTable.sColor = glm::vec3(1.0f);
 		uboPoolTable.mvpMat = Prj * View * World;
 		DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
 	}
