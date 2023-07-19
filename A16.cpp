@@ -80,7 +80,7 @@ protected:
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLCabinet, DSLNeoGeoCabinet, DSLSimple;
+	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple;
 	/* A16 -- OK */
 	/* Add the variable that will contain the required Descriptor Set Layout */
 	DescriptorSetLayout DSLVColor;
@@ -102,7 +102,7 @@ protected:
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom1, MDecoration, MCeiling, MFloor, MNeoGeoCabinet;
+	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling, MFloor;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
@@ -111,18 +111,17 @@ protected:
 	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2, MPoolLamp;
 	Model<VertexOverlay> MKey;
 
-	DescriptorSet DSGubo, DSCabinet, DSCabinet2, DSAsteroids,DSNeoGeoCabinet, DSCeilingLamp1, DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine;
+	DescriptorSet DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1, DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
-	DescriptorSet DSRoom1, DSDecoration, DSCeiling, DSFloor;
-	Texture T1, T2, T3, TRoom1, TDecoration, TCeiling, TFloor,TAsteroids1,TAsteroids2,TAsteroids3;
-	Texture NeoGeoCabinetT1, NeoGeoCabinetT2;
+	DescriptorSet DSRoom, DSDecoration, DSCeiling, DSFloor;
+	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids;
 	Texture TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture;
 
 	// C++ storage for uniform variables
 	UniformBlockSimple uboPoolTable,uboSnackMachine;
-	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom1, uboDecoration, uboCeiling, uboFloor, uboNeoGeoCabinet, uboCeilingLamp1, uboCeilingLamp2, uboPoolLamp;
+	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom, uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1, uboCeilingLamp2, uboPoolLamp;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -163,9 +162,9 @@ protected:
 		// Descriptor pool sizes
 		/* A16 -- OK */
 		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 20;
-		texturesInPool = 20;
-		setsInPool = 20;
+		uniformBlocksInPool = 100;
+		texturesInPool = 100;
+		setsInPool = 100;
 
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -179,17 +178,6 @@ protected:
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
-		DSLCabinet.init(this, {
-								{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-								{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-								{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-								{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
-		DSLNeoGeoCabinet.init(this, {
-								{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-								{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-								{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
 		DSLMesh.init(this, {
 			// this array contains the bindings:
 			// first  element : the binding number
@@ -295,7 +283,7 @@ protected:
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag1.spv", { &DSLGubo,&DSLMesh,&DSLCabinet,&DSLNeoGeoCabinet });
+		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag1.spv", { &DSLGubo,&DSLMesh});
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
@@ -313,11 +301,10 @@ protected:
 		MCabinet1.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
         MCabinet2.init(this,&VMesh,"Models/Cabinet.obj",OBJ );
         MAsteroids.init(this,&VMesh,"Models/Asteroids.obj",OBJ);
-		MNeoGeoCabinet.init(this, &VMesh, "Models/neoGeoCabinet.obj", OBJ);
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
-		MRoom1.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
+		MRoom.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
 		MDecoration.init(this, &VMesh, "Models/Decoration.obj", OBJ);
 
 		MCeiling.init(this, &VMesh, "Models/CeilingV3.obj", OBJ);
@@ -329,29 +316,24 @@ protected:
 		MPoolLamp.init(this, &VMesh, "Models/LampPoolFinal.obj", OBJ);
 
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
-		MSnackMachine.init(this, &VSimple, "Models/snackMachine.mgcg", MGCG);
+		MSnackMachine.init(this, &VSimple, "Models/SnackMachine.mgcg", MGCG);
 		
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
 		// Create the textures
 		// The second parameter is the file name
-		T1.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
-		T2.init(this, "textures/DefenderTextures/Material.001_metallicRoughness.png");
-		T3.init(this, "textures/DefenderTextures/Material.001_normal.png");
-		TRoom1.init(this, "textures/RoomTextures/ArcadeWalls.jpg");
+		TCabinet.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
+		TRoom.init(this, "textures/RoomTextures/ArcadeWalls.jpg");
 		TDecoration.init(this, "textures/RoomTextures/Decoration.jpg");
 		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
 		TFloor.init(this, "textures/RoomTextures/Floor.jpg");
-		NeoGeoCabinetT1.init(this, "textures/NeoGeoCabinet/DM.jpg");
-		NeoGeoCabinetT2.init(this, "textures/NeoGeoCabinet/NM.jpg");
 		TCeilingLamp1.init(this, "textures/white.png");
 		TCeilingLamp2.init(this, "textures/white.png");
 		TPoolLamp.init(this, "textures/DarkGrey.png");
 		TForniture.init(this, "textures/Textures_Forniture.png");
-        TAsteroids1.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
-        TAsteroids2.init(this,"textures/AsteroidsTextures/Material.001_metallicRoughness.png");
-        TAsteroids3.init(this,"textures/AsteroidsTextures/Material.001_normal.png");
+        TAsteroids.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
+   
 
 		// Init local variables
 		alpha = glm::radians(180.0f);
@@ -368,47 +350,25 @@ protected:
 		/* Create the new pipeline */
 		PVColor.create();
 		// Here you define the data set
-		DSCabinet.init(this, &DSLCabinet, {
+		DSCabinet.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &T1},
-			{2, TEXTURE, 0, &T2},
-			{3, TEXTURE, 0, &T3}
-
+			{1, TEXTURE, 0, &TCabinet}
 		});
-        DSCabinet2.init(this, &DSLCabinet, {
+        DSCabinet2.init(this, &DSLSimple, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &T1},
-                {2, TEXTURE, 0, &T2},
-                {3, TEXTURE, 0, &T3}
-
+                {1, TEXTURE, 0, &TCabinet}
         });
-        DSAsteroids.init(this, &DSLCabinet, {
+        DSAsteroids.init(this, &DSLSimple, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TAsteroids1},
-                {2, TEXTURE, 0, &TAsteroids2},
-                {3, TEXTURE, 0, &TAsteroids3}
-
+                {1, TEXTURE, 0, &TAsteroids}
         });
-
-		DSNeoGeoCabinet.init(this, &DSLNeoGeoCabinet, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &NeoGeoCabinetT1},
-			{2, TEXTURE, 0, &NeoGeoCabinetT2}
-		});
-		/* A16 -- OK */
-		/* Define the data set for the room */
-		/*
-		DSRoom.init(this, &DSLVColor, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}
-			});
-		*/
-
-		DSRoom1.init(this, &DSLCabinet, {
+		
+		DSRoom.init(this, &DSLSimple, {
 				{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
-				{1, TEXTURE, 0, &TRoom1},
+				{1, TEXTURE, 0, &TRoom},
 		});
 
-		DSDecoration.init(this, &DSLCabinet, {
+		DSDecoration.init(this, &DSLSimple, {
 				{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 				{1, TEXTURE, 0, &TDecoration},
 			});
@@ -458,20 +418,14 @@ protected:
 		// Cleanup pipelines
 		PMesh.cleanup();
 		POverlay.cleanup();
-		/* A16 -- OK */
-		/* cleanup the new pipeline */
 		PVColor.cleanup();
 		PSimple.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
         DSCabinet2.cleanup();
         DSAsteroids.cleanup();
-		DSNeoGeoCabinet.cleanup();
-		/* A16 -- OK */
-		/* cleanup the dataset for the room */
-		DSRoom1.cleanup();
+		DSRoom.cleanup();
 		DSDecoration.cleanup();
-		//DSRoom.cleanup();
 		DSCeiling.cleanup();
 		DSFloor.cleanup();
 		DSGubo.cleanup();
@@ -488,12 +442,8 @@ protected:
 	// methods: .cleanup() recreates them, while .destroy() delete them completely
 	void localCleanup() {
 		// Cleanup textures
-		T1.cleanup();
-		T2.cleanup();
-		T3.cleanup();
-		NeoGeoCabinetT1.cleanup();
-		NeoGeoCabinetT2.cleanup();
-		TRoom1.cleanup();
+		TCabinet.cleanup();
+		TRoom.cleanup();
 		TDecoration.cleanup();
 		TCeiling.cleanup();
 		TFloor.cleanup();
@@ -501,19 +451,16 @@ protected:
 		TCeilingLamp2.cleanup();
 		TPoolLamp.cleanup();
 		TForniture.cleanup();
-        TAsteroids1.cleanup();
-        TAsteroids2.cleanup();
-        TAsteroids3.cleanup();
+        TAsteroids.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
         MCabinet2.cleanup();
         MAsteroids.cleanup();
-		MNeoGeoCabinet.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the mesh for the room */
 		//MRoom.cleanup();
-		MRoom1.cleanup();
+		MRoom.cleanup();
 		MDecoration.cleanup();
 		MCeiling.cleanup();
 		MFloor.cleanup();
@@ -529,8 +476,6 @@ protected:
 		DSLVColor.cleanup();
 		DSLGubo.cleanup();
 
-		DSLCabinet.cleanup();
-		DSLNeoGeoCabinet.cleanup();
 
 		DSLSimple.cleanup();
 		// Destroies the pipelines
@@ -583,16 +528,12 @@ protected:
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MAsteroids.indices.size()), 1, 0, 0, 0);
 
-		MNeoGeoCabinet.bind(commandBuffer);
-		DSNeoGeoCabinet.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MNeoGeoCabinet.indices.size()), 1, 0, 0, 0);
 
-		MRoom1.bind(commandBuffer);
+		MRoom.bind(commandBuffer);
 		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
-		DSRoom1.bind(commandBuffer, PMesh, 1, currentImage);
+		DSRoom.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MRoom1.indices.size()), 1, 0, 0, 0);
+			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 
 		MDecoration.bind(commandBuffer);
 		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
@@ -611,13 +552,7 @@ protected:
 		DSFloor.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
-		/* A16 -- OK */
-		/* Insert the commands to draw the room */
-		//PVColor.bind(commandBuffer);
-		//MRoom.bind(commandBuffer);
-		//DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
-		//vkCmdDrawIndexed(commandBuffer,
-		//		static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
+
 		MCeilingLamp1.bind(commandBuffer);
 		DSCeilingLamp1.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
@@ -806,29 +741,12 @@ protected:
 		World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
 			glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) * glm::scale(glm::mat4(1), glm::vec3(0.0065f));
 
-		uboNeoGeoCabinet.amb = 1.0f; uboNeoGeoCabinet.gamma = 180.0f; uboNeoGeoCabinet.sColor = glm::vec3(1.0f);
-		uboNeoGeoCabinet.mvpMat = Prj * View * World;
-		uboNeoGeoCabinet.mMat = World;
-		uboNeoGeoCabinet.nMat = glm::inverse(glm::transpose(World));
-		DSNeoGeoCabinet.map(currentImage, &uboNeoGeoCabinet, sizeof(uboNeoGeoCabinet), 0);
-
-		/* A16 -- OK*/
-		/* fill the uniform block for the room. Identical to the one of the body of the slot machine
-		World = glm::scale(glm::mat4(1),glm::vec3(1,2.5f,1));
+		World = glm::mat4(1);
 		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
 		uboRoom.mvpMat = Prj * View * World;
 		uboRoom.mMat = World;
 		uboRoom.nMat = glm::inverse(glm::transpose(World));
-		/* map the uniform data block to the GPU */
-		//DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
-
-
-		World = glm::mat4(1);
-		uboRoom1.amb = 1.0f; uboRoom1.gamma = 180.0f; uboRoom1.sColor = glm::vec3(1.0f);
-		uboRoom1.mvpMat = Prj * View * World;
-		uboRoom1.mMat = World;
-		uboRoom1.nMat = glm::inverse(glm::transpose(World));
-		DSRoom1.map(currentImage, &uboRoom1, sizeof(uboRoom1), 0);
+		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
 
 		World = glm::mat4(1);
 		uboDecoration.amb = 1.0f; uboDecoration.gamma = 180.0f; uboDecoration.sColor = glm::vec3(1.0f);
