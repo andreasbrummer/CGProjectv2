@@ -347,7 +347,7 @@ protected:
 		NeoGeoCabinetT2.init(this, "textures/NeoGeoCabinet/NM.jpg");
 		TCeilingLamp1.init(this, "textures/white.png");
 		TCeilingLamp2.init(this, "textures/white.png");
-		TPoolLamp.init(this, "textures/Grey.png");
+		TPoolLamp.init(this, "textures/DarkGrey.png");
 		TForniture.init(this, "textures/Textures_Forniture.png");
         TAsteroids1.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
         TAsteroids2.init(this,"textures/AsteroidsTextures/Material.001_metallicRoughness.png");
@@ -770,7 +770,7 @@ protected:
 		gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
 		gubo.SLightColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		gubo.SLightPos = glm::vec3(9.5f, 1.0f, 1.0f);
+		gubo.SLightPos = glm::vec3(10.0f, 1.0f, 1.0f);
 
 		// Writes value to the GPU
 		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
@@ -868,7 +868,8 @@ protected:
 		uboCeilingLamp2.nMat = glm::inverse(glm::transpose(World));
 		DSCeilingLamp2.map(currentImage, &uboCeilingLamp2, sizeof(uboCeilingLamp2), 0);
 
-		World = translate(glm::mat4(1.0), glm::vec3(10.0f, 1.0f, 0.0f));
+		World = translate(glm::mat4(1.0), glm::vec3(10.0f, 1.6f, 0.0f)) *
+			glm::scale(glm::mat4(1), glm::vec3(2.0f, 0.8f, 2.0f));
 		uboPoolLamp.amb = 1.0f; uboPoolLamp.gamma = 180.0f; uboPoolLamp.sColor = glm::vec3(1.0f);
 		uboPoolLamp.mvpMat = Prj * View * World;
 		uboPoolLamp.mMat = World;
