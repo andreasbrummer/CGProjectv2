@@ -355,9 +355,9 @@ protected:
 		TForniture.init(this, "textures/Textures_Forniture.png");
         TAsteroids.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
    
-		const char* T2fn[] = { "textures/sky/posx.jpg", "textures/sky/negx.jpg",
-							  "textures/sky/posy.jpg",   "textures/sky/negy.jpg",
-							  "textures/sky/posz.jpg", "textures/sky/negz.jpg" };
+		const char* T2fn[] = { "textures/sky/bkg1_right.png", "textures/sky/bkg1_left.png",
+							  "textures/sky/bkg1_top.png",   "textures/sky/bkg1_bot.png",
+							  "textures/sky/bkg1_front.png", "textures/sky/bkg1_back.png" };
 		TskyBox.initCubic(this, T2fn);
 		// Init local variables
 		alpha = glm::radians(180.0f);
@@ -647,16 +647,7 @@ protected:
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
-		/*PROVA*/
-		const float MOUSE_RES = 10.0f;
-		static double old_xpos = 0, old_ypos = 0;
-		double xpos, ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
-		double m_dx = xpos - old_xpos;
-		double m_dy = ypos - old_ypos;
-		old_xpos = xpos; old_ypos = ypos;
-		/*FINEPROVA*/
-
+	
 		getSixAxis(deltaT, m, r, fire);
 		static bool wasFire = false;
 		bool handleFire = (wasFire && (!fire));
@@ -733,47 +724,16 @@ protected:
 			glm::rotate(glm::mat4(1.0), -alpha, glm::vec3(0, 1, 0)) *
 			glm::translate(glm::mat4(1.0), -cameraPos);
 
-		glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		//SKYBOX STUFF
+		CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+			-deltaT * ROT_SPEED*r.y,
+			glm::vec3(CamDir[1])) * glm::mat4(CamDir));
+		if (beta<glm::radians(90.0f) && beta>glm::radians(-90.0f)) {
 			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				deltaT * (float)m_dx * ROT_SPEED / MOUSE_RES,
-				glm::vec3(CamDir[1])) * glm::mat4(CamDir));
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				deltaT * (float)m_dy * ROT_SPEED / MOUSE_RES,
+				-deltaT * ROT_SPEED * r.x,
 				glm::vec3(CamDir[0])) * glm::mat4(CamDir));
 		}
 
-		if (glfwGetKey(window, GLFW_KEY_LEFT)) {
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				deltaT * ROT_SPEED,
-				glm::vec3(CamDir[1])) * glm::mat4(CamDir));
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				-deltaT * ROT_SPEED,
-				glm::vec3(CamDir[1])) * glm::mat4(CamDir));
-		}
-		if (glfwGetKey(window, GLFW_KEY_UP)&& beta < glm::radians(90.0f)) { //HERE
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				deltaT * ROT_SPEED,
-				glm::vec3(CamDir[0])) * glm::mat4(CamDir));
-		}
-		if (glfwGetKey(window, GLFW_KEY_DOWN) && beta > glm::radians(-90.0f)) { //HERE
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				-deltaT * ROT_SPEED,
-				glm::vec3(CamDir[0])) * glm::mat4(CamDir));
-		}/*
-		if (glfwGetKey(window, GLFW_KEY_Q)) {
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				deltaT * ROT_SPEED,
-				glm::vec3(CamDir[2])) * glm::mat4(CamDir));
-		}
-		if (glfwGetKey(window, GLFW_KEY_E)) {
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				-deltaT * ROT_SPEED,
-				glm::vec3(CamDir[2])) * glm::mat4(CamDir));
-		}*/
 
 	}
 	// Here is where you update the uniforms.
