@@ -791,11 +791,11 @@ protected:
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
 		gubo.eyePos = Pos;
 		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
-		//gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
-		gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
+		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
-		gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		//gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
+		gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
+		//gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 		gubo.PLightPosPool = glm::vec3(10.0f, 3.0f, 1.0f);
 		gubo.PLightColorPool = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
