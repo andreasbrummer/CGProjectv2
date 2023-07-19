@@ -43,6 +43,12 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec4 SLightColor;
 };
 
+struct SkyboxUniformBufferObject {
+	alignas(16) glm::mat4 mvpMat;
+	alignas(16) glm::mat4 mMat;
+	alignas(16) glm::mat4 nMat;
+};
+
 // The vertices data structures
 struct VertexMesh {
 	glm::vec3 pos;
@@ -69,7 +75,7 @@ struct VertexVColor {
 };
 
 class A16;
-void GameLogic(A16* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World);
+void GameLogic(A16* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World,glm::mat3 &CamDir);
 
 
 // MAIN ! 
@@ -80,7 +86,7 @@ protected:
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple;
+	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple,DSLskyBox;
 	/* A16 -- OK */
 	/* Add the variable that will contain the required Descriptor Set Layout */
 	DescriptorSetLayout DSLVColor;
@@ -97,6 +103,7 @@ protected:
 	Pipeline PMesh;
 	Pipeline POverlay;
 	Pipeline PSimple;
+	Pipeline PskyBox;
 	/* A16 -- OK */
 	/* Add the variable that will contain the new pipeline */
 	Pipeline PVColor;
@@ -110,14 +117,15 @@ protected:
 	Model<VertexSimple> MPoolTable,MSnackMachine;
 	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2, MPoolLamp;
 	Model<VertexOverlay> MKey;
+	Model<VertexSimple> MskyBox;
 
 	DescriptorSet DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1, DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
-	DescriptorSet DSRoom, DSDecoration, DSCeiling, DSFloor;
+	DescriptorSet DSRoom, DSDecoration, DSCeiling, DSFloor, DSskyBox;
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids;
-	Texture TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture;
+	Texture TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox;
 
 	// C++ storage for uniform variables
 	UniformBlockSimple uboPoolTable,uboSnackMachine;
@@ -139,6 +147,7 @@ protected:
 	float alpha;
 	float beta;
 	float RoomRot = 0.0;
+	glm::mat3 CamDir = glm::mat3(1.0f);
 
 	//PROVA
 	// Jump parameters
@@ -205,6 +214,11 @@ protected:
 
 		DSLSimple.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			});
+
+		DSLskyBox.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
 
@@ -292,6 +306,11 @@ protected:
 		PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", { &DSLGubo, &DSLVColor });
 
 		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
+		PskyBox.init(this,&VSimple ,"shaders/SkyBoxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLskyBox });
+		PskyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
+			VK_CULL_MODE_BACK_BIT, false);
+
+
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
 		// Create models
@@ -317,7 +336,7 @@ protected:
 
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
 		MSnackMachine.init(this, &VSimple, "Models/SnackMachine.mgcg", MGCG);
-		
+		MskyBox.init(this,&VSimple, "Models/SkyBoxCube.obj",OBJ);
 
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -334,7 +353,10 @@ protected:
 		TForniture.init(this, "textures/Textures_Forniture.png");
         TAsteroids.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
    
-
+		const char* T2fn[] = { "textures/sky/posx.jpg", "textures/sky/negx.jpg",
+							  "textures/sky/posy.jpg",   "textures/sky/negy.jpg",
+							  "textures/sky/posz.jpg", "textures/sky/negz.jpg" };
+		TskyBox.initCubic(this, T2fn);
 		// Init local variables
 		alpha = glm::radians(180.0f);
 		beta = 0.0f;
@@ -346,9 +368,8 @@ protected:
 		PMesh.create();
 		POverlay.create();
 		PSimple.create();
-		/* A16 -- OK */
-		/* Create the new pipeline */
 		PVColor.create();
+		PskyBox.create();
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -410,6 +431,11 @@ protected:
 			{1, TEXTURE, 0, &TForniture}
 		});
 
+		DSskyBox.init(this, &DSLskyBox, {
+					{0, UNIFORM, sizeof(SkyboxUniformBufferObject), nullptr},
+					{1, TEXTURE, 0, &TskyBox}
+			});
+
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -420,6 +446,7 @@ protected:
 		POverlay.cleanup();
 		PVColor.cleanup();
 		PSimple.cleanup();
+		PskyBox.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
         DSCabinet2.cleanup();
@@ -430,10 +457,12 @@ protected:
 		DSFloor.cleanup();
 		DSGubo.cleanup();
 
+
 		DSCeilingLamp1.cleanup();
 		DSCeilingLamp2.cleanup();
 		DSPoolLamp.cleanup();
 		DSPoolTable.cleanup();
+		DSskyBox.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -452,11 +481,13 @@ protected:
 		TPoolLamp.cleanup();
 		TForniture.cleanup();
         TAsteroids.cleanup();
+		TskyBox.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
         MCabinet2.cleanup();
         MAsteroids.cleanup();
+		MskyBox.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the mesh for the room */
 		//MRoom.cleanup();
@@ -478,6 +509,7 @@ protected:
 
 
 		DSLSimple.cleanup();
+		DSLskyBox.cleanup();
 		// Destroies the pipelines
 		PMesh.destroy();
 		POverlay.destroy();
@@ -485,6 +517,7 @@ protected:
 		/* Destroy the new pipeline */
 		PVColor.destroy();
 		PSimple.destroy();
+		PskyBox.destroy();
 	}
 
 	// Here it is the creation of the command buffer:
@@ -584,6 +617,14 @@ protected:
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
 
+		PskyBox.bind(commandBuffer);
+		MskyBox.bind(commandBuffer);
+		DSskyBox.bind(commandBuffer, PskyBox,0,currentImage);
+
+		// property .indices.size() of models, contains the number of triangles * 3 of the mesh.
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MskyBox.indices.size()), 1, 0, 0, 0);
+
 	}
 
 	void GameLogic() {
@@ -600,13 +641,20 @@ protected:
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
 		float MOVE_SPEED = 2.0f * 2.0f;
-
-
-
 		// Integration with the timers and the controllers
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
+		/*PROVA*/
+		const float MOUSE_RES = 10.0f;
+		static double old_xpos = 0, old_ypos = 0;
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		double m_dx = xpos - old_xpos;
+		double m_dy = ypos - old_ypos;
+		old_xpos = xpos; old_ypos = ypos;
+		/*FINEPROVA*/
+
 		getSixAxis(deltaT, m, r, fire);
 		static bool wasFire = false;
 		bool handleFire = (wasFire && (!fire));
@@ -683,6 +731,48 @@ protected:
 			glm::rotate(glm::mat4(1.0), -alpha, glm::vec3(0, 1, 0)) *
 			glm::translate(glm::mat4(1.0), -cameraPos);
 
+		glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				deltaT * (float)m_dx * ROT_SPEED / MOUSE_RES,
+				glm::vec3(CamDir[1])) * glm::mat4(CamDir));
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				deltaT * (float)m_dy * ROT_SPEED / MOUSE_RES,
+				glm::vec3(CamDir[0])) * glm::mat4(CamDir));
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_LEFT)) {
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				deltaT * ROT_SPEED,
+				glm::vec3(CamDir[1])) * glm::mat4(CamDir));
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				-deltaT * ROT_SPEED,
+				glm::vec3(CamDir[1])) * glm::mat4(CamDir));
+		}
+		if (glfwGetKey(window, GLFW_KEY_UP)&& beta < glm::radians(90.0f)) { //HERE
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				deltaT * ROT_SPEED,
+				glm::vec3(CamDir[0])) * glm::mat4(CamDir));
+		}
+		if (glfwGetKey(window, GLFW_KEY_DOWN) && beta > glm::radians(-90.0f)) { //HERE
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				-deltaT * ROT_SPEED,
+				glm::vec3(CamDir[0])) * glm::mat4(CamDir));
+		}/*
+		if (glfwGetKey(window, GLFW_KEY_Q)) {
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				deltaT * ROT_SPEED,
+				glm::vec3(CamDir[2])) * glm::mat4(CamDir));
+		}
+		if (glfwGetKey(window, GLFW_KEY_E)) {
+			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
+				-deltaT * ROT_SPEED,
+				glm::vec3(CamDir[2])) * glm::mat4(CamDir));
+		}*/
+
 	}
 	// Here is where you update the uniforms.
 	// Very likely this will be where you will be writing the logic of your application.
@@ -692,7 +782,8 @@ protected:
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 		GameLogic();
-
+		
+		
 		gubo.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
 		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
@@ -803,6 +894,14 @@ protected:
 			glm::scale(glm::mat4(1), glm::vec3(2.0f));
 		uboSnackMachine.mvpMat = Prj * View * World;
 		DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
+
+		// update Skybox uniforms
+		SkyboxUniformBufferObject sbubo{};
+		sbubo.mMat = glm::mat4(1.0f);
+		sbubo.nMat = glm::mat4(1.0f);
+		sbubo.mvpMat = Prj * glm::transpose(glm::mat4(CamDir));
+		DSskyBox.map(currentImage, &sbubo, sizeof(sbubo), 0);
+
 
 	}
 };
