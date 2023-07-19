@@ -111,7 +111,7 @@ protected:
 	Pipeline PVColor;
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling, MFloor;
+	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling, MFloor,MDanceDance,MBattleZone,MNudge;
 	/* A16 -- OK */
 	/* Add the variable that will contain the model for the room */
 
@@ -121,17 +121,23 @@ protected:
 	Model<VertexOverlay> MKey;
 	Model<VertexSimple> MskyBox;
 
-	DescriptorSet DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1, DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine;
+	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
+                     DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
+                     DSDanceDance,DSBattleZone,DSNudge;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom
 	DescriptorSet DSRoom, DSDecoration, DSCeiling, DSFloor, DSskyBox;
-	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids;
-	Texture TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox;
+	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
+            TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
+            TDanceDance,TBattleZone,TNudge;
+
 
 	// C++ storage for uniform variables
 	UniformBlockSimple uboPoolTable,uboSnackMachine;
-	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom, uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1, uboCeilingLamp2, uboPoolLamp;
+	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
+                     uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
+                     uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone, uboNudge;
 	/* A16 -- OK */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -322,6 +328,10 @@ protected:
 		MCabinet1.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
         MCabinet2.init(this,&VMesh,"Models/Cabinet.obj",OBJ );
         MAsteroids.init(this,&VMesh,"Models/Asteroids.obj",OBJ);
+        MDanceDance.init(this,&VMesh, "Models/DanceDance.obj", OBJ);
+        MBattleZone.init(this, &VMesh,"Models/BattleZone.obj", OBJ);
+        MNudge.init(this, &VMesh,"Models/Nudge.obj", OBJ);
+
 		/* A16 -- OK*/
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
@@ -354,6 +364,9 @@ protected:
 		TPoolLamp.init(this, "textures/DarkGrey.png");
 		TForniture.init(this, "textures/Textures_Forniture.png");
         TAsteroids.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
+        TDanceDance.init(this,"textures/DanceDanceTextures/lambert3_baseColor.png");
+        TBattleZone.init(this,"textures/BattleZoneTextures/Material.001_baseColor.png");
+        TNudge.init(this,"textures/Nudge/Material.002_albedo.jpg");
    
 		const char* T2fn[] = { "textures/sky/bkg1_right.png", "textures/sky/bkg1_left.png",
 							  "textures/sky/bkg1_top.png",   "textures/sky/bkg1_bot.png",
@@ -384,6 +397,18 @@ protected:
         DSAsteroids.init(this, &DSLSimple, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TAsteroids}
+        });
+        DSDanceDance.init(this, &DSLSimple, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TDanceDance}
+        });
+        DSBattleZone.init(this, &DSLSimple, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TBattleZone}
+        });
+        DSNudge.init(this, &DSLSimple, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TNudge}
         });
 		
 		DSRoom.init(this, &DSLSimple, {
@@ -453,6 +478,9 @@ protected:
 		DSCabinet.cleanup();
         DSCabinet2.cleanup();
         DSAsteroids.cleanup();
+        DSDanceDance.cleanup();
+        DSBattleZone.cleanup();
+        DSNudge.cleanup();
 		DSRoom.cleanup();
 		DSDecoration.cleanup();
 		DSCeiling.cleanup();
@@ -484,15 +512,18 @@ protected:
 		TForniture.cleanup();
         TAsteroids.cleanup();
 		TskyBox.cleanup();
+        TDanceDance.cleanup();
+        TBattleZone.cleanup();
+        TNudge.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
         MCabinet2.cleanup();
         MAsteroids.cleanup();
+        MDanceDance.cleanup();
+        MBattleZone.cleanup();
+        MNudge.cleanup();
 		MskyBox.cleanup();
-		/* A16 -- OK */
-		/* Cleanup the mesh for the room */
-		//MRoom.cleanup();
 		MRoom.cleanup();
 		MDecoration.cleanup();
 		MCeiling.cleanup();
@@ -529,11 +560,9 @@ protected:
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 		// sets global uniforms (see below from parameters explanation)
 		DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
-
 		// binds the pipeline
 		PMesh.bind(commandBuffer);
 		// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
-
 		// binds the model
 		// For a Model object, this command binds the corresponing index and vertex buffer
 		// to the command buffer passed in its parameter
@@ -563,6 +592,20 @@ protected:
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MAsteroids.indices.size()), 1, 0, 0, 0);
 
+        MDanceDance.bind(commandBuffer);
+        DSDanceDance.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MDanceDance.indices.size()), 1, 0, 0, 0);
+
+        MBattleZone.bind(commandBuffer);
+        DSBattleZone.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MBattleZone.indices.size()), 1, 0, 0, 0);
+
+        MNudge.bind(commandBuffer);
+        DSNudge.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MNudge.indices.size()), 1, 0, 0, 0);
 
 		MRoom.bind(commandBuffer);
 		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
@@ -603,10 +646,8 @@ protected:
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
-		PVColor.bind(commandBuffer);
-
-
-		POverlay.bind(commandBuffer);
+		//PVColor.bind(commandBuffer);
+		//POverlay.bind(commandBuffer);
 
 		PSimple.bind(commandBuffer);
 		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
@@ -772,7 +813,8 @@ protected:
 		// the third parameter is its size
 		// the fourth parameter is the location inside the descriptor set of this uniform block
 
-		World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -1.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
+		World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -1.2f)) *
+                glm::scale(glm::mat4(1), glm::vec3(0.018f));
 
 		uboCabinet1.amb = 1.0f; uboCabinet1.gamma = 180.0f; uboCabinet1.sColor = glm::vec3(1.0f);
 		uboCabinet1.mvpMat = Prj * View * World;
@@ -780,7 +822,8 @@ protected:
 		uboCabinet1.nMat = glm::inverse(glm::transpose(World));
 		DSCabinet.map(currentImage, &uboCabinet1, sizeof(uboCabinet1), 0);
 
-        World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -9.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
+        World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -9.2f)) *
+                glm::scale(glm::mat4(1), glm::vec3(0.018f));
 
         uboCabinet2.amb = 1.0f; uboCabinet2.gamma = 180.0f; uboCabinet2.sColor = glm::vec3(1.0f);
         uboCabinet2.mvpMat = Prj * View * World;
@@ -788,7 +831,8 @@ protected:
         uboCabinet2.nMat = glm::inverse(glm::transpose(World));
         DSCabinet2.map(currentImage, &uboCabinet2, sizeof(uboCabinet2), 0);
 
-        World = glm::translate(glm::mat4(1.0), glm::vec3(0.8, 0.75f, -7.2f)) * glm::scale(glm::mat4(1), glm::vec3(0.018f));
+        World = glm::translate(glm::mat4(1.0), glm::vec3(0.8, 0.5f, -7.2f)) *
+                glm::scale(glm::mat4(1), glm::vec3(0.018f));
 
         uboAsteroids.amb = 1.0f; uboAsteroids.gamma = 180.0f; uboAsteroids.sColor = glm::vec3(1.0f);
         uboAsteroids.mvpMat = Prj * View * World;
@@ -796,10 +840,42 @@ protected:
         uboAsteroids.nMat = glm::inverse(glm::transpose(World));
         DSAsteroids.map(currentImage, &uboAsteroids, sizeof(uboAsteroids), 0);
 
+        World = glm::rotate(glm::mat4(1.0), glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
+                glm::translate(glm::mat4(1.0), glm::vec3(-3.2, 1.7f, -0.5f)) *
+                glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+        uboBattleZone.amb = 1.0f; uboBattleZone.gamma = 180.0f; uboBattleZone.sColor = glm::vec3(1.0f);
+        uboBattleZone.mvpMat = Prj * View * World;
+        uboBattleZone.mMat = World;
+        uboBattleZone.nMat = glm::inverse(glm::transpose(World));
+        DSBattleZone.map(currentImage, &uboBattleZone, sizeof(uboBattleZone), 0);
+
+        World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
+                glm::translate(glm::mat4(1.0), glm::vec3(5, -0.2f, 0.7f)) *
+                glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+        uboNudge.amb = 1.0f; uboNudge.gamma = 180.0f; uboNudge.sColor = glm::vec3(1.0f);
+        uboNudge.mvpMat = Prj * View * World;
+        uboNudge.mMat = World;
+        uboNudge.nMat = glm::inverse(glm::transpose(World));
+        DSNudge.map(currentImage, &uboNudge, sizeof(uboNudge), 0);
+
+        World = glm::rotate(glm::mat4(1.0), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
+                glm::translate(glm::mat4(1.0), glm::vec3(5.5f, 0.0f, -8.5f)) *
+                glm::scale(glm::mat4(1), glm::vec3(0.5f));
+
+        uboDanceDace.amb = 1.0f; uboDanceDace.gamma = 180.0f; uboDanceDace.sColor = glm::vec3(1.0f);
+        uboDanceDace.mvpMat = Prj * View * World;
+        uboDanceDace.mMat = World;
+        uboDanceDace.nMat = glm::inverse(glm::transpose(World));
+        DSDanceDance.map(currentImage, &uboDanceDace, sizeof(uboDanceDace), 0);
+
 		World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
-			glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) * glm::scale(glm::mat4(1), glm::vec3(0.0065f));
+			    glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) *
+                glm::scale(glm::mat4(1), glm::vec3(0.0065f));
 
 		World = glm::mat4(1);
+
 		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
 		uboRoom.mvpMat = Prj * View * World;
 		uboRoom.mMat = World;
