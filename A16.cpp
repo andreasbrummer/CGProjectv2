@@ -329,7 +329,7 @@ protected:
 		MPoolLamp.init(this, &VMesh, "Models/LampPoolFinal.obj", OBJ);
 
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
-		MSnackMachine.init(this, &VSimple, "Models/SnackMachine.mgcg", MGCG);
+		MSnackMachine.init(this, &VSimple, "Models/snackMachine.mgcg", MGCG);
 		
 
 		// Creates a mesh with direct enumeration of vertices and indices
@@ -647,7 +647,7 @@ protected:
 		DSSnackMachine.bind(commandBuffer, PSimple, 0, currentImage);
 		MSnackMachine.bind(commandBuffer);
 		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
+			static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
 
 	}
 
