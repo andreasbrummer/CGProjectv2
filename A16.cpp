@@ -70,12 +70,6 @@ struct VertexSimple {
 
 /* A16 -- OK */
 /* Add the C++ datastructure for the required vertex format */
-struct VertexVColor {
-	glm::vec3 pos;
-	glm::vec3 norm;
-	glm::vec3 color;
-};
-
 class A16;
 void GameLogic(A16* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World,glm::mat3 &CamDir);
 
@@ -91,24 +85,18 @@ protected:
 	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple,DSLskyBox;
 	/* A16 -- OK */
 	/* Add the variable that will contain the required Descriptor Set Layout */
-	DescriptorSetLayout DSLVColor;
 
 	// Vertex formats
 	VertexDescriptor VMesh;
 	VertexDescriptor VOverlay;
 	VertexDescriptor VSimple;
-	/* A16 -- OK */
-	/* Add the variable that will contain the required Vertex format definition */
-	VertexDescriptor VVColor;
 
 	// Pipelines [Shader couples]
 	Pipeline PMesh;
 	Pipeline POverlay;
 	Pipeline PSimple;
 	Pipeline PskyBox;
-	/* A16 -- OK */
-	/* Add the variable that will contain the new pipeline */
-	Pipeline PVColor;
+
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling, MFloor,MDanceDance,MBattleZone,MNudge;
@@ -210,11 +198,6 @@ protected:
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
-		/* A16 -- OK */
-		/* Init the new Data Set Layout */
-		DSLVColor.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-			});
 
 		DSLGubo.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
@@ -275,18 +258,6 @@ protected:
 			  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),
 					 sizeof(glm::vec2), UV}
 			});
-		/* A16 -- OK */
-		/* Define the new Vertex Format */
-		VVColor.init(this, {
-				  {0, sizeof(VertexVColor), VK_VERTEX_INPUT_RATE_VERTEX}
-			}, {
-			  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, pos),
-					 sizeof(glm::vec3), POSITION},
-			  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, norm),
-					 sizeof(glm::vec3), NORMAL},
-			  {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, color),
-					 sizeof(glm::vec3), COLOR},
-			});
 		
 		//VOverlay MISSING!!!!!
 
@@ -309,9 +280,6 @@ protected:
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
-		/* A16 -- OK */
-		/* Create the new pipeline, using shaders "VColorVert.spv" and "VColorFrag.spv" */
-		PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", { &DSLGubo, &DSLVColor });
 
 		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
 		PskyBox.init(this,&VSimple ,"shaders/SkyBoxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLskyBox });
@@ -383,7 +351,6 @@ protected:
 		PMesh.create();
 		POverlay.create();
 		PSimple.create();
-		PVColor.create();
 		PskyBox.create();
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
@@ -471,7 +438,6 @@ protected:
 		// Cleanup pipelines
 		PMesh.cleanup();
 		POverlay.cleanup();
-		PVColor.cleanup();
 		PSimple.cleanup();
 		PskyBox.cleanup();
 		// Cleanup datasets
@@ -537,7 +503,6 @@ protected:
 		DSLOverlay.cleanup();
 		/* A16 -- OK */
 		/* Cleanup the new Descriptor Set Layout */
-		DSLVColor.cleanup();
 		DSLGubo.cleanup();
 
 
@@ -548,7 +513,6 @@ protected:
 		POverlay.destroy();
 		/* A16 -- OK */
 		/* Destroy the new pipeline */
-		PVColor.destroy();
 		PSimple.destroy();
 		PskyBox.destroy();
 	}
@@ -795,8 +759,8 @@ protected:
 		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
-		gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
-		//gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		//gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
+		gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 		gubo.PLightPosPool = glm::vec3(10.0f, 3.0f, 1.0f);
 		gubo.PLightColorPool = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -939,12 +903,12 @@ protected:
 		DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
 
 		// update Skybox uniforms
+		
 		SkyboxUniformBufferObject sbubo{};
 		sbubo.mMat = glm::mat4(1.0f);
 		sbubo.nMat = glm::mat4(1.0f);
 		sbubo.mvpMat = Prj * glm::transpose(glm::mat4(CamDir));
 		DSskyBox.map(currentImage, &sbubo, sizeof(sbubo), 0);
-
 
 	}
 };
