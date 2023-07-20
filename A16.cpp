@@ -604,7 +604,7 @@ protected:
 		const float nearPlane = 0.1f;
 		const float farPlane = 100.f;
 		// Camera target height and distance
-		const float camHeight = 2.1f;
+		const float camHeight = 2.35f;
 		// Camera Pitch limits
 		const float minPitch = glm::radians(-60.0f);
 		const float maxPitch = glm::radians(60.0f);
@@ -722,12 +722,12 @@ protected:
 		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
-		//gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
-		gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
+		//gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
 		//gubo.SLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		gubo.SLightColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		gubo.SLightPos = glm::vec3(10.0f, 1.0f, 1.0f);
+		gubo.SLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.SLightPos = glm::vec3(10.0f, 3.0f, 1.0f);
 
 		// Writes value to the GPU
 		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
@@ -808,7 +808,7 @@ protected:
         DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
 
         World = rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
-                translate(glm::mat4(1.0), glm::vec3(10.0f, 0.0f, 0.0f)) *
+                translate(glm::mat4(1.0), glm::vec3(10.0f, 0.0f, 1.0f)) *
                 glm::scale(glm::mat4(1), glm::vec3(1.5f));
         uboPoolTable.amb = 1.0f; uboPoolTable.gamma = 180.0f; uboPoolTable.sColor = glm::vec3(1.0f);
         uboPoolTable.mvpMat = Prj * View * World;
