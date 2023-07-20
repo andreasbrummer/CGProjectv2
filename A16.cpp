@@ -78,28 +78,24 @@ protected:
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple,DSLskyBox;
+	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple;
 	// Vertex formats
 	VertexDescriptor VMesh,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh;
-	Pipeline POverlay;
-	Pipeline PSimple;
-	Pipeline PskyBox;
-	Pipeline PRoom;
+	Pipeline PMesh, POverlay, PSimple, PSkyBoxP;
+    Pipeline PRoom;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor;
-	Model<VertexSimple> MskyBox;
+                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
-                     DSCeiling, DSFloor, DSskyBox,DSDoor;
+                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
@@ -110,7 +106,7 @@ protected:
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor;
+                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva;
 
 	GlobalUniformBlock gubo;
 
@@ -188,11 +184,6 @@ protected:
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
 
-		DSLskyBox.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
-
 		// Vertex descriptors
         // this array contains the bindings
         // first  element : the binding number
@@ -253,15 +244,17 @@ protected:
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
 		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLMesh});
+        PSkyBoxP.init(this, &VMesh, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLMesh});
+        PSkyBoxP.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
+                                     VK_CULL_MODE_NONE, false);
+
+        POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		PRoom.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLMesh });
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
 		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
-		PskyBox.init(this,&VSimple ,"shaders/SkyBoxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLskyBox });
-		PskyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
-			VK_CULL_MODE_BACK_BIT, false);
 
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
@@ -285,7 +278,8 @@ protected:
 		MPoolLamp.init(this, &VMesh, "Models/SpotLampV2.obj", OBJ);
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
-		MskyBox.init(this,&VSimple, "Models/SkyBoxCube.obj",OBJ);
+        MDoor.init(this,&VMesh,"Models/door.obj",OBJ);
+        MSkyBoxProva.init(this,&VMesh,"Models/skybox_cube.obj",OBJ);
         MDoor.init(this,&VMesh,"Models/NewDoor.obj",OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -307,10 +301,10 @@ protected:
         TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/door.jpeg");
-   
-		const char* T2fn[] = { "textures/sky/bkg1_right.png", "textures/sky/bkg1_left.png",
-							  "textures/sky/bkg1_top.png",   "textures/sky/bkg1_bot.png",
-							  "textures/sky/bkg1_front.png", "textures/sky/bkg1_back.png" };
+
+		const char* T2fn[] = { "textures/sky/px.png", "textures/sky/nx.png",
+							  "textures/sky/py.png",   "textures/sky/ny.png",
+							  "textures/sky/pz.png", "textures/sky/nz.png" };
 		TskyBox.initCubic(this, T2fn);
 		// Init local variables
 		alpha = glm::radians(180.0f);
@@ -323,8 +317,8 @@ protected:
 		PMesh.create();
 		POverlay.create();
 		PSimple.create();
-		PskyBox.create();
 		PRoom.create();
+        PSkyBoxP.create();
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -374,10 +368,15 @@ protected:
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TFloor}
 		});
+        DSSkyBoxProva.init(this, &DSLMesh, {
+                {0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TskyBox}
+        });
 
 		DSGubo.init(this, &DSLGubo, {
 			{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 		});
+
 
 		DSCeilingLamp1.init(this, &DSLMesh, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -403,11 +402,6 @@ protected:
 			{1, TEXTURE, 0, &TSnackMachine}
 		});
 
-		DSskyBox.init(this, &DSLskyBox, {
-					{0, UNIFORM, sizeof(SkyboxUniformBufferObject), nullptr},
-					{1, TEXTURE, 0, &TskyBox}
-			});
-
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -417,7 +411,7 @@ protected:
 		PMesh.cleanup();
 		POverlay.cleanup();
 		PSimple.cleanup();
-		PskyBox.cleanup();
+        PSkyBoxP.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
         DSCabinet2.cleanup();
@@ -435,7 +429,7 @@ protected:
 		DSCeilingLamp2.cleanup();
 		DSPoolLamp.cleanup();
 		DSPoolTable.cleanup();
-		DSskyBox.cleanup();
+		DSSkyBoxProva.cleanup();
         DSDoor.cleanup();
 	}
 
@@ -470,7 +464,6 @@ protected:
         MDanceDance.cleanup();
         MBattleZone.cleanup();
         MNudge.cleanup();
-		MskyBox.cleanup();
 		MRoom.cleanup();
 		MDecoration.cleanup();
 		MCeiling.cleanup();
@@ -488,15 +481,14 @@ protected:
 		DSLOverlay.cleanup();
 		DSLGubo.cleanup();
 		DSLSimple.cleanup();
-		DSLskyBox.cleanup();
 
 
 		// Destroies the pipelines
 		PMesh.destroy();
 		POverlay.destroy();
 		PSimple.destroy();
-		PskyBox.destroy();
 		PRoom.destroy();
+        PSkyBoxP.destroy();
 	}
 
 	// Here it is the creation of the command buffer:
@@ -506,6 +498,7 @@ protected:
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 		// sets global uniforms (see below from parameters explanation)
 		DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+
 		// binds the pipeline
 		PMesh.bind(commandBuffer);
 		// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
@@ -524,6 +517,7 @@ protected:
 		// record the drawing command in the command bufferun
 		// the second parameter is the number of indexes to be drawn. For a Model object,
 		// this can be retrieved with the .indices.size() method.
+
 
 		MCabinet1.bind(commandBuffer);
 		DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
@@ -606,15 +600,16 @@ protected:
 
 		PSimple.bind(commandBuffer);
 
-        PskyBox.bind(commandBuffer);
-		MskyBox.bind(commandBuffer);
-		DSskyBox.bind(commandBuffer, PskyBox,0,currentImage);
 
-		// property .indices.size() of models, contains the number of triangles * 3 of the mesh.
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MskyBox.indices.size()), 1, 0, 0, 0);
+        DSGubo.bind(commandBuffer,PSkyBoxP,0,currentImage);
+        PSkyBoxP.bind(commandBuffer);
+        MSkyBoxProva.bind(commandBuffer);
+        DSSkyBoxProva.bind(commandBuffer, PSkyBoxP, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MSkyBoxProva.indices.size()), 1, 0, 0, 0);
 
-	}
+
+    }
 
 	void GameLogic() {
 		// Parameters
@@ -624,9 +619,6 @@ protected:
 		const float farPlane = 100.f;
 		// Camera target height and distance
 		const float camHeight = 2.35f;
-		// Camera Pitch limits
-		const float minPitch = glm::radians(-60.0f);
-		const float maxPitch = glm::radians(60.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
 		float MOVE_SPEED = 2.0f * 2.0f;
@@ -711,15 +703,6 @@ protected:
 			glm::rotate(glm::mat4(1.0), -alpha, glm::vec3(0, 1, 0)) *
 			glm::translate(glm::mat4(1.0), -cameraPos);
 
-		//SKYBOX STUFF
-		CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-			-deltaT * ROT_SPEED*r.y,
-			glm::vec3(CamDir[1])) * glm::mat4(CamDir));
-		if (beta<glm::radians(90.0f) && beta>glm::radians(-90.0f)) {
-			CamDir = glm::mat3(glm::rotate(glm::mat4(1.0f),
-				-deltaT * ROT_SPEED * r.x,
-				glm::vec3(CamDir[0])) * glm::mat4(CamDir));
-		}
 
 
 	}
@@ -748,12 +731,23 @@ protected:
 		gubo.SLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.SLightPos = glm::vec3(10.0f, 3.0f, 1.0f);
 
+
+
 		// Writes value to the GPU
 		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 		// the .map() method of a DataSet object, requires the current image of the swap chain as first parameter
 		// the second parameter is the pointer to the C++ data structure to transfer to the GPU
 		// the third parameter is its size
 		// the fourth parameter is the location inside the descriptor set of this uniform block
+
+        World = /*glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.0f)) **/
+                glm::scale(glm::mat4(1), glm::vec3(150.0f));
+
+        uboSkyboxProva.amb = 1.0f; uboSkyboxProva.gamma = 180.0f; uboSkyboxProva.sColor = glm::vec3(1.0f);
+        uboSkyboxProva.mvpMat = Prj * View * World;
+        uboSkyboxProva.mMat = World;
+        uboSkyboxProva.nMat = glm::inverse(glm::transpose(World));
+        DSSkyBoxProva.map(currentImage, &uboSkyboxProva, sizeof(uboSkyboxProva), 0);
 
 		World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -1.2f)) *
                 glm::scale(glm::mat4(1), glm::vec3(0.018f));
@@ -898,15 +892,6 @@ protected:
 		uboPoolLamp.mMat = World;
 		uboPoolLamp.nMat = glm::inverse(glm::transpose(World));
 		DSPoolLamp.map(currentImage, &uboPoolLamp, sizeof(uboPoolLamp), 0);
-
-
-		// update Skybox uniforms
-
-		SkyboxUniformBufferObject sbubo{};
-		sbubo.mMat = glm::mat4(1.0f);
-		sbubo.nMat = glm::mat4(1.0f);
-		sbubo.mvpMat = Prj * glm::transpose(glm::mat4(CamDir));
-		DSskyBox.map(currentImage, &sbubo, sizeof(sbubo), 0);
 
 
 	}
