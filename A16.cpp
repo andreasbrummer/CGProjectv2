@@ -92,8 +92,8 @@ protected:
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp;
-	Model<VertexSimple> MskyBox, MPoolTable;
+                      MCeilingLamp2, MPoolLamp, MPoolTable;
+	Model<VertexSimple> MskyBox;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
@@ -102,15 +102,14 @@ protected:
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
-            TDanceDance,TBattleZone,TNudge,TSnackMachine;
+            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable;
 
 
 	// C++ storage for uniform variables
-	UniformBlockSimple uboPoolTable;
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine;
+                     uboNudge, uboSnackMachine, uboPoolTable;
 
 	GlobalUniformBlock gubo;
 
@@ -131,7 +130,7 @@ protected:
 	// Jump parameters
 	bool isJumping = false;         // Flag to indicate if the player is currently jumping
 	float jumpVelocity = 0.0f;      // Initial jump velocity
-	float jumpHeight = 2.0f;        // Height the player can reach during the jump
+	float jumpHeight = 1.5f;        // Height the player can reach during the jump
 	float gravity = 9.8f;           // Acceleration due to gravity
 	float maxJumpTime = 1.3f;       // Maximum duration of the jump
 	float jumpTime = 0.0f;          // Current time elapsed during the jump
@@ -282,7 +281,7 @@ protected:
 		MCeilingLamp1.init(this, &VMesh, "Models/LampReverseN.obj",OBJ);
 		MCeilingLamp2.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
 		MPoolLamp.init(this, &VMesh, "Models/LampPoolFinal.obj", OBJ);
-		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
+		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MskyBox.init(this,&VSimple, "Models/SkyBoxCube.obj",OBJ);
 
@@ -304,6 +303,7 @@ protected:
         TBattleZone.init(this,"textures/BattleZoneTextures/Material.001_baseColor.png");
         TNudge.init(this,"textures/Nudge/Material.002_albedo.jpg");
         TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
+        TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
    
 		const char* T2fn[] = { "textures/sky/bkg1_right.png", "textures/sky/bkg1_left.png",
 							  "textures/sky/bkg1_top.png",   "textures/sky/bkg1_bot.png",
@@ -385,8 +385,8 @@ protected:
 			});
 
 		DSPoolTable.init(this, &DSLSimple, {
-			{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
-			{1, TEXTURE, 0, &TForniture}
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TPoolTable}
 		});
 
 		DSSnackMachine.init(this, &DSLSimple, {
@@ -450,6 +450,7 @@ protected:
         TBattleZone.cleanup();
         TNudge.cleanup();
         TSnackMachine.cleanup();
+        TPoolTable.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
@@ -544,6 +545,11 @@ protected:
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
 
+        MPoolTable.bind(commandBuffer);
+        DSPoolTable.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
+
         MRoom.bind(commandBuffer);
 		DSRoom.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
@@ -580,11 +586,6 @@ protected:
 			static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
 		PSimple.bind(commandBuffer);
-		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
-		MPoolTable.bind(commandBuffer);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
-
 
         PskyBox.bind(commandBuffer);
 		MskyBox.bind(commandBuffer);
@@ -806,6 +807,15 @@ protected:
         uboSnackMachine.nMat = glm::inverse(glm::transpose(World));
         DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
 
+        World = rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
+                translate(glm::mat4(1.0), glm::vec3(10.0f, 0.0f, 0.0f)) *
+                glm::scale(glm::mat4(1), glm::vec3(1.5f));
+        uboPoolTable.amb = 1.0f; uboPoolTable.gamma = 180.0f; uboPoolTable.sColor = glm::vec3(1.0f);
+        uboPoolTable.mvpMat = Prj * View * World;
+        uboPoolTable.mMat = World;
+        uboPoolTable.nMat = glm::inverse(glm::transpose(World));
+        DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
+
 
         World = glm::mat4(1);
 		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
@@ -860,10 +870,7 @@ protected:
 		uboPoolLamp.nMat = glm::inverse(glm::transpose(World));
 		DSPoolLamp.map(currentImage, &uboPoolLamp, sizeof(uboPoolLamp), 0);
 
-		World = rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0, 1, 0)) * translate(glm::mat4(1.0), glm::vec3(-1.0f, 0.0f, 10.0f)) *
-			glm::scale(glm::mat4(1), glm::vec3(2.0f));
-		uboPoolTable.mvpMat = Prj * View * World;
-		DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
+
 
 
 
