@@ -38,8 +38,6 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec4 PLightColor;
 	alignas(16) glm::vec3 PLightPos2;
 	alignas(16) glm::vec4 PLightColor2;
-	alignas(16) glm::vec3 PLightPosPool;
-	alignas(16) glm::vec4 PLightColorPool;
 	alignas(16) glm::vec3 SLightPos;
 	alignas(16) glm::vec3 SLightDir;
 	alignas(16) glm::vec4 SLightColor;
@@ -276,12 +274,12 @@ protected:
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag1.spv", { &DSLGubo,&DSLMesh});
+		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLMesh});
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
+		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/MeshFragTest.spv", { &DSLSimple });
 		PskyBox.init(this,&VSimple ,"shaders/SkyBoxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLskyBox });
 		PskyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_BACK_BIT, false);
@@ -755,7 +753,7 @@ protected:
 		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
 		gubo.eyePos = Pos;
-		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
+		gubo.PLightPos = glm::vec3(3.0f, 3.8f, -4.0f);
 		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
