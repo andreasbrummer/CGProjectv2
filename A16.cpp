@@ -279,7 +279,7 @@ protected:
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/MeshFragTest.spv", { &DSLSimple });
+		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
 		PskyBox.init(this,&VSimple ,"shaders/SkyBoxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLskyBox });
 		PskyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_BACK_BIT, false);
@@ -759,9 +759,6 @@ protected:
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
 		//gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-		gubo.PLightPosPool = glm::vec3(10.0f, 3.0f, 1.0f);
-		gubo.PLightColorPool = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
 		//gubo.SLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
