@@ -282,7 +282,7 @@ protected:
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
 		MCeilingLamp1.init(this, &VMesh, "Models/LampReverseN.obj",OBJ);
 		MCeilingLamp2.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
-		MPoolLamp.init(this, &VMesh, "Models/LampPoolFinal.obj", OBJ);
+		MPoolLamp.init(this, &VMesh, "Models/SpotLampV2.obj", OBJ);
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MskyBox.init(this,&VSimple, "Models/SkyBoxCube.obj",OBJ);
@@ -298,7 +298,7 @@ protected:
 		TFloor.init(this, "textures/RoomTextures/WoodFloor.jpg");
 		TCeilingLamp1.init(this, "textures/white.png");
 		TCeilingLamp2.init(this, "textures/white.png");
-		TPoolLamp.init(this, "textures/DarkGrey.png");
+		TPoolLamp.init(this, "textures/lamp.jpg");
 		TForniture.init(this, "textures/Textures_Forniture.png");
         TAsteroids.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
         TDanceDance.init(this,"textures/DanceDanceTextures/lambert3_baseColor.png");
