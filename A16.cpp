@@ -66,8 +66,6 @@ struct VertexSimple {
 	glm::vec2 UV;
 };
 
-/* A16 -- OK */
-/* Add the C++ datastructure for the required vertex format */
 class A16;
 void GameLogic(A16* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World,glm::mat3 &CamDir);
 
@@ -81,13 +79,8 @@ protected:
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
 	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple,DSLskyBox;
-	/* A16 -- OK */
-	/* Add the variable that will contain the required Descriptor Set Layout */
-
 	// Vertex formats
-	VertexDescriptor VMesh;
-	VertexDescriptor VOverlay;
-	VertexDescriptor VSimple;
+	VertexDescriptor VMesh,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
 	Pipeline PMesh;
@@ -97,36 +90,27 @@ protected:
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling, MFloor,MDanceDance,MBattleZone,MNudge;
-	/* A16 -- OK */
-	/* Add the variable that will contain the model for the room */
-
-	//Model<VertexVColor> MRoom;
-	Model<VertexSimple> MPoolTable,MSnackMachine;
-	Model<VertexMesh> MCeilingLamp1, MCeilingLamp2, MPoolLamp;
-	Model<VertexOverlay> MKey;
-	Model<VertexSimple> MskyBox;
+	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
+                      MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
+                      MCeilingLamp2, MPoolLamp;
+	Model<VertexSimple> MskyBox, MPoolTable;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
-                     DSDanceDance,DSBattleZone,DSNudge;
-	/* A16 -- OK */
-	/* Add the variable that will contain the Descriptor Set for the room */
-	//DescriptorSet DSRoom
-	DescriptorSet DSRoom, DSDecoration, DSCeiling, DSFloor, DSskyBox;
+                     DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
+                     DSCeiling, DSFloor, DSskyBox;
+
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
-            TDanceDance,TBattleZone,TNudge;
+            TDanceDance,TBattleZone,TNudge,TSnackMachine;
 
 
 	// C++ storage for uniform variables
-	UniformBlockSimple uboPoolTable,uboSnackMachine;
+	UniformBlockSimple uboPoolTable;
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
-                     uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone, uboNudge;
-	/* A16 -- OK */
-	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
-	//MeshUniformBlock uboRoom;
+                     uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
+                     uboNudge, uboSnackMachine;
 
 	GlobalUniformBlock gubo;
 
@@ -163,8 +147,6 @@ protected:
 		initialBackgroundColor = { 0.0f, 0.005f, 0.01f, 1.0f };
 
 		// Descriptor pool sizes
-		/* A16 -- OK */
-		/* Update the requirements for the size of the pool */
 		uniformBlocksInPool = 100;
 		texturesInPool = 100;
 		setsInPool = 100;
@@ -181,13 +163,13 @@ protected:
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
+        // this array contains the bindings:
+        // first  element : the binding number
+        // second element : the type of element (buffer or texture)
+        //                  using the corresponding Vulkan constant
+        // third  element : the pipeline stage where it will be used
+        //                  using the corresponding Vulkan constant
 		DSLMesh.init(this, {
-			// this array contains the bindings:
-			// first  element : the binding number
-			// second element : the type of element (buffer or texture)
-			//                  using the corresponding Vulkan constant
-			// third  element : the pipeline stage where it will be used
-			//                  using the corresponding Vulkan constant
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
@@ -212,34 +194,34 @@ protected:
 			});
 
 		// Vertex descriptors
+        // this array contains the bindings
+        // first  element : the binding number
+        // second element : the stride of this binging
+        // third  element : whether this parameter change per vertex or per instance
+        //                  using the corresponding Vulkan constant
+        // this array contains the location
+        // first  element : the binding number
+        // second element : the location number
+        // third  element : the offset of this element in the memory record
+        // fourth element : the data type of the element
+        //                  using the corresponding Vulkan constant
+        // fifth  elmenet : the size in byte of the element
+        // sixth  element : a constant defining the element usage
+        //                   POSITION - a vec3 with the position
+        //                   NORMAL   - a vec3 with the normal vector
+        //                   UV       - a vec2 with a UV coordinate
+        //                   COLOR    - a vec4 with a RGBA color
+        //                   TANGENT  - a vec4 with the tangent vector
+        //                   OTHER    - anything else
+        //
+        // ***************** DOUBLE CHECK ********************
+        //    That the Vertex data structure you use in the "offsetoff" and
+        //	in the "sizeof" in the previous array, refers to the correct one,
+        //	if you have more than one vertex format!
+        // ***************************************************
 		VMesh.init(this, {
-			// this array contains the bindings
-			// first  element : the binding number
-			// second element : the stride of this binging
-			// third  element : whether this parameter change per vertex or per instance
-			//                  using the corresponding Vulkan constant
 			{0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
-				// this array contains the location
-				// first  element : the binding number
-				// second element : the location number
-				// third  element : the offset of this element in the memory record
-				// fourth element : the data type of the element
-				//                  using the corresponding Vulkan constant
-				// fifth  elmenet : the size in byte of the element
-				// sixth  element : a constant defining the element usage
-				//                   POSITION - a vec3 with the position
-				//                   NORMAL   - a vec3 with the normal vector
-				//                   UV       - a vec2 with a UV coordinate
-				//                   COLOR    - a vec4 with a RGBA color
-				//                   TANGENT  - a vec4 with the tangent vector
-				//                   OTHER    - anything else
-				//
-				// ***************** DOUBLE CHECK ********************
-				//    That the Vertex data structure you use in the "offsetoff" and
-				//	in the "sizeof" in the previous array, refers to the correct one,
-				//	if you have more than one vertex format!
-				// ***************************************************
 				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
 					   sizeof(glm::vec3), POSITION},
 				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
@@ -247,7 +229,6 @@ protected:
 				{0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
 					   sizeof(glm::vec2), UV}
 			});
-
 		VOverlay.init(this, {
 				  {0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
@@ -256,9 +237,6 @@ protected:
 			  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),
 					 sizeof(glm::vec2), UV}
 			});
-		
-		//VOverlay MISSING!!!!!
-
 		VSimple.init(this, {
 				  {0, sizeof(VertexSimple), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
@@ -297,23 +275,15 @@ protected:
         MDanceDance.init(this,&VMesh, "Models/DanceDance.obj", OBJ);
         MBattleZone.init(this, &VMesh,"Models/BattleZone.obj", OBJ);
         MNudge.init(this, &VMesh,"Models/Nudge.obj", OBJ);
-
-		/* A16 -- OK*/
-		/* load the mesh for the room, contained in OBJ file "Room.obj" */
-		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
 		MRoom.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
 		MDecoration.init(this, &VMesh, "Models/Decoration.obj", OBJ);
-
 		MCeiling.init(this, &VMesh, "Models/CeilingV3.obj", OBJ);
-
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
-
 		MCeilingLamp1.init(this, &VMesh, "Models/LampReverseN.obj",OBJ);
 		MCeilingLamp2.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
 		MPoolLamp.init(this, &VMesh, "Models/LampPoolFinal.obj", OBJ);
-
 		MPoolTable.init(this, &VSimple, "Models/poolTable.mgcg", MGCG);
-		MSnackMachine.init(this, &VSimple, "Models/SnackMachine.mgcg", MGCG);
+		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MskyBox.init(this,&VSimple, "Models/SkyBoxCube.obj",OBJ);
 
 		// Creates a mesh with direct enumeration of vertices and indices
@@ -333,6 +303,7 @@ protected:
         TDanceDance.init(this,"textures/DanceDanceTextures/lambert3_baseColor.png");
         TBattleZone.init(this,"textures/BattleZoneTextures/Material.001_baseColor.png");
         TNudge.init(this,"textures/Nudge/Material.002_albedo.jpg");
+        TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
    
 		const char* T2fn[] = { "textures/sky/bkg1_right.png", "textures/sky/bkg1_left.png",
 							  "textures/sky/bkg1_top.png",   "textures/sky/bkg1_bot.png",
@@ -419,8 +390,8 @@ protected:
 		});
 
 		DSSnackMachine.init(this, &DSLSimple, {
-			{0, UNIFORM, sizeof(UniformBlockSimple), nullptr},
-			{1, TEXTURE, 0, &TForniture}
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TSnackMachine}
 		});
 
 		DSskyBox.init(this, &DSLskyBox, {
@@ -445,13 +416,12 @@ protected:
         DSDanceDance.cleanup();
         DSBattleZone.cleanup();
         DSNudge.cleanup();
+        DSSnackMachine.cleanup();
 		DSRoom.cleanup();
 		DSDecoration.cleanup();
 		DSCeiling.cleanup();
 		DSFloor.cleanup();
 		DSGubo.cleanup();
-
-
 		DSCeilingLamp1.cleanup();
 		DSCeilingLamp2.cleanup();
 		DSPoolLamp.cleanup();
@@ -479,6 +449,7 @@ protected:
         TDanceDance.cleanup();
         TBattleZone.cleanup();
         TNudge.cleanup();
+        TSnackMachine.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
@@ -496,21 +467,20 @@ protected:
 		MCeilingLamp2.cleanup();
 		MPoolLamp.cleanup();
 		MPoolTable.cleanup();
+        MSnackMachine.cleanup();
+
+
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
 		DSLOverlay.cleanup();
-		/* A16 -- OK */
-		/* Cleanup the new Descriptor Set Layout */
 		DSLGubo.cleanup();
-
-
 		DSLSimple.cleanup();
 		DSLskyBox.cleanup();
+
+
 		// Destroies the pipelines
 		PMesh.destroy();
 		POverlay.destroy();
-		/* A16 -- OK */
-		/* Destroy the new pipeline */
 		PSimple.destroy();
 		PskyBox.destroy();
 	}
@@ -569,26 +539,27 @@ protected:
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MNudge.indices.size()), 1, 0, 0, 0);
 
-		MRoom.bind(commandBuffer);
-		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+        MSnackMachine.bind(commandBuffer);
+        DSSnackMachine.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
+
+        MRoom.bind(commandBuffer);
 		DSRoom.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 
 		MDecoration.bind(commandBuffer);
-		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 		DSDecoration.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MDecoration.indices.size()), 1, 0, 0, 0);
 
 		MCeiling.bind(commandBuffer);
-		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 		DSCeiling.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MCeiling.indices.size()), 1, 0, 0, 0);
 
 		MFloor.bind(commandBuffer);
-		// DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 		DSFloor.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
@@ -608,21 +579,14 @@ protected:
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
-		//PVColor.bind(commandBuffer);
-		//POverlay.bind(commandBuffer);
-
 		PSimple.bind(commandBuffer);
 		DSPoolTable.bind(commandBuffer, PSimple, 0, currentImage);
 		MPoolTable.bind(commandBuffer);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
 
-		DSSnackMachine.bind(commandBuffer, PSimple, 0, currentImage);
-		MSnackMachine.bind(commandBuffer);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
 
-		PskyBox.bind(commandBuffer);
+        PskyBox.bind(commandBuffer);
 		MskyBox.bind(commandBuffer);
 		DSskyBox.bind(commandBuffer, PskyBox,0,currentImage);
 
@@ -759,7 +723,6 @@ protected:
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
 		//gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
 		//gubo.SLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.SLightColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
@@ -811,7 +774,7 @@ protected:
 
         World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
                 glm::translate(glm::mat4(1.0), glm::vec3(5, -0.2f, 0.7f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.018f));
+                glm::scale(glm::mat4(1), glm::vec3(0.018f)); //0.018
 
         uboNudge.amb = 1.0f; uboNudge.gamma = 180.0f; uboNudge.sColor = glm::vec3(1.0f);
         uboNudge.mvpMat = Prj * View * World;
@@ -833,8 +796,18 @@ protected:
 			    glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) *
                 glm::scale(glm::mat4(1), glm::vec3(0.0065f));
 
-		World = glm::mat4(1);
 
+
+        World = translate(glm::mat4(1.0), glm::vec3(14.0f, 0.0f, -9.5f)) *
+                glm::scale(glm::mat4(1), glm::vec3(12.0f));
+        uboSnackMachine.amb = 1.0f; uboSnackMachine.gamma = 180.0f; uboSnackMachine.sColor = glm::vec3(1.0f);
+        uboSnackMachine.mvpMat = Prj * View * World;
+        uboSnackMachine.mMat = World;
+        uboSnackMachine.nMat = glm::inverse(glm::transpose(World));
+        DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
+
+
+        World = glm::mat4(1);
 		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
 		uboRoom.mvpMat = Prj * View * World;
 		uboRoom.mMat = World;
@@ -892,18 +865,17 @@ protected:
 		uboPoolTable.mvpMat = Prj * View * World;
 		DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
 
-		World = rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) * translate(glm::mat4(1.0), glm::vec3(14.0f, 0.0f, -9.7f)) *
-			glm::scale(glm::mat4(1), glm::vec3(2.0f));
-		uboSnackMachine.mvpMat = Prj * View * World;
-		DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
+
+
 
 		// update Skybox uniforms
-		
+
 		SkyboxUniformBufferObject sbubo{};
 		sbubo.mMat = glm::mat4(1.0f);
 		sbubo.nMat = glm::mat4(1.0f);
 		sbubo.mvpMat = Prj * glm::transpose(glm::mat4(CamDir));
 		DSskyBox.map(currentImage, &sbubo, sizeof(sbubo), 0);
+
 
 	}
 };
