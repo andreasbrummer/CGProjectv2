@@ -87,6 +87,7 @@ protected:
 	Pipeline POverlay;
 	Pipeline PSimple;
 	Pipeline PskyBox;
+	Pipeline PRoom;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
@@ -252,6 +253,7 @@ protected:
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
 		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLMesh});
+		PRoom.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLMesh });
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
@@ -284,16 +286,16 @@ protected:
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MskyBox.init(this,&VSimple, "Models/SkyBoxCube.obj",OBJ);
-        MDoor.init(this,&VMesh,"Models/door.obj",OBJ);
+        MDoor.init(this,&VMesh,"Models/NewDoor.obj",OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 		// Create the textures
 		// The second parameter is the file name
 		TCabinet.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
-		TRoom.init(this, "textures/RoomTextures/ArcadeWalls.jpg");
+		TRoom.init(this, "textures/RoomTextures/ArcadeWalls2.jpg");
 		TDecoration.init(this, "textures/RoomTextures/Decoration.jpg");
 		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
-		TFloor.init(this, "textures/RoomTextures/Floor.jpg");
+		TFloor.init(this, "textures/RoomTextures/WoodFloor.jpg");
 		TCeilingLamp1.init(this, "textures/white.png");
 		TCeilingLamp2.init(this, "textures/white.png");
 		TPoolLamp.init(this, "textures/DarkGrey.png");
@@ -322,6 +324,7 @@ protected:
 		POverlay.create();
 		PSimple.create();
 		PskyBox.create();
+		PRoom.create();
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -493,6 +496,7 @@ protected:
 		POverlay.destroy();
 		PSimple.destroy();
 		PskyBox.destroy();
+		PRoom.destroy();
 	}
 
 	// Here it is the creation of the command buffer:
@@ -563,11 +567,6 @@ protected:
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
-        MRoom.bind(commandBuffer);
-		DSRoom.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
-
 		MDecoration.bind(commandBuffer);
 		DSDecoration.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
@@ -597,6 +596,13 @@ protected:
 		DSPoolLamp.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
+
+		PRoom.bind(commandBuffer);
+
+		MRoom.bind(commandBuffer);
+		DSRoom.bind(commandBuffer, PRoom, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 
 		PSimple.bind(commandBuffer);
 
@@ -767,7 +773,7 @@ protected:
         uboCabinet2.nMat = glm::inverse(glm::transpose(World));
         DSCabinet2.map(currentImage, &uboCabinet2, sizeof(uboCabinet2), 0);
 
-        World = glm::translate(glm::mat4(1.0), glm::vec3(0.8, 0.5f, -7.2f)) *
+        World = glm::translate(glm::mat4(1.0), glm::vec3(0.8, 0.7f, -7.2f)) *
                 glm::scale(glm::mat4(1), glm::vec3(0.018f));
 
         uboAsteroids.amb = 1.0f; uboAsteroids.gamma = 180.0f; uboAsteroids.sColor = glm::vec3(1.0f);
@@ -787,7 +793,7 @@ protected:
         DSBattleZone.map(currentImage, &uboBattleZone, sizeof(uboBattleZone), 0);
 
         World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
-                glm::translate(glm::mat4(1.0), glm::vec3(5, -0.2f, 0.7f)) *
+                glm::translate(glm::mat4(1.0), glm::vec3(5.3f, -0.1f, 0.7f)) *
                 glm::scale(glm::mat4(1), glm::vec3(0.018f)); //0.018
 
         uboNudge.amb = 1.0f; uboNudge.gamma = 180.0f; uboNudge.sColor = glm::vec3(1.0f);
@@ -796,7 +802,8 @@ protected:
         uboNudge.nMat = glm::inverse(glm::transpose(World));
         DSNudge.map(currentImage, &uboNudge, sizeof(uboNudge), 0);
 
-        World = glm::rotate(glm::mat4(1.0), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
+
+        World = glm::rotate(glm::mat4(1.0), glm::radians(-0.1f), glm::vec3(0, 1, 0)) *
                 glm::translate(glm::mat4(1.0), glm::vec3(5.5f, 0.0f, -8.5f)) *
                 glm::scale(glm::mat4(1), glm::vec3(0.5f));
 
@@ -891,10 +898,6 @@ protected:
 		uboPoolLamp.mMat = World;
 		uboPoolLamp.nMat = glm::inverse(glm::transpose(World));
 		DSPoolLamp.map(currentImage, &uboPoolLamp, sizeof(uboPoolLamp), 0);
-
-
-
-
 
 
 		// update Skybox uniforms
