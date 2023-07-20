@@ -92,24 +92,24 @@ protected:
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp, MPoolTable;
+                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor;
 	Model<VertexSimple> MskyBox;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
-                     DSCeiling, DSFloor, DSskyBox;
+                     DSCeiling, DSFloor, DSskyBox,DSDoor;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
-            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable;
+            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor;
 
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine, uboPoolTable;
+                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor;
 
 	GlobalUniformBlock gubo;
 
@@ -284,7 +284,7 @@ protected:
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MskyBox.init(this,&VSimple, "Models/SkyBoxCube.obj",OBJ);
-
+        MDoor.init(this,&VMesh,"Models/door.obj",OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 		// Create the textures
@@ -304,6 +304,7 @@ protected:
         TNudge.init(this,"textures/Nudge/Material.002_albedo.jpg");
         TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
+        TDoor.init(this,"textures/door.jpeg");
    
 		const char* T2fn[] = { "textures/sky/bkg1_right.png", "textures/sky/bkg1_left.png",
 							  "textures/sky/bkg1_top.png",   "textures/sky/bkg1_bot.png",
@@ -345,6 +346,11 @@ protected:
         DSNudge.init(this, &DSLSimple, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TNudge}
+        });
+
+        DSDoor.init(this, &DSLSimple, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TDoor}
         });
 		
 		DSRoom.init(this, &DSLSimple, {
@@ -427,6 +433,7 @@ protected:
 		DSPoolLamp.cleanup();
 		DSPoolTable.cleanup();
 		DSskyBox.cleanup();
+        DSDoor.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -451,6 +458,7 @@ protected:
         TNudge.cleanup();
         TSnackMachine.cleanup();
         TPoolTable.cleanup();
+        TDoor.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
@@ -469,6 +477,7 @@ protected:
 		MPoolLamp.cleanup();
 		MPoolTable.cleanup();
         MSnackMachine.cleanup();
+        MDoor.cleanup();
 
 
 		// Cleanup descriptor set layouts
@@ -549,6 +558,10 @@ protected:
         DSPoolTable.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
+        MDoor.bind(commandBuffer);
+        DSDoor.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
         MRoom.bind(commandBuffer);
 		DSRoom.bind(commandBuffer, PMesh, 1, currentImage);
@@ -815,6 +828,15 @@ protected:
         uboPoolTable.mMat = World;
         uboPoolTable.nMat = glm::inverse(glm::transpose(World));
         DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
+
+        World = //rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
+                translate(glm::mat4(1.0), glm::vec3(10.6f, 0.0f, -10.5f)) *
+                glm::scale(glm::mat4(1), glm::vec3(1.7f,0.9f,1.0f));
+        uboDoor.amb = 1.0f; uboDoor.gamma = 180.0f; uboDoor.sColor = glm::vec3(1.0f);
+        uboDoor.mvpMat = Prj * View * World;
+        uboDoor.mMat = World;
+        uboDoor.nMat = glm::inverse(glm::transpose(World));
+        DSDoor.map(currentImage, &uboDoor, sizeof(uboDoor), 0);
 
 
         World = glm::mat4(1);
