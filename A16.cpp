@@ -90,23 +90,23 @@ protected:
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva;
+                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva,MBanner;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
-                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva;
+                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
-            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor;
+            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,TBanner;
 
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva;
+                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner;
 
 	GlobalUniformBlock gubo;
 
@@ -281,6 +281,7 @@ protected:
         MDoor.init(this,&VMesh,"Models/door.obj",OBJ);
         MSkyBoxProva.init(this,&VMesh,"Models/skybox_cube.obj",OBJ);
         MDoor.init(this,&VMesh,"Models/NewDoor.obj",OBJ);
+		MBanner.init(this, &VMesh, "Models/insegna.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 		// Create the textures
@@ -301,6 +302,7 @@ protected:
         TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/door.jpeg");
+		TBanner.init(this, "textures/insegna.jpg");
 
 		const char* T2fn[] = { "textures/sky/px.png", "textures/sky/nx.png",
 							  "textures/sky/py.png",   "textures/sky/ny.png",
@@ -401,6 +403,10 @@ protected:
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TSnackMachine}
 		});
+		DSBanner.init(this, &DSLSimple, {
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TBanner}
+			});
 
 	}
 
@@ -431,6 +437,7 @@ protected:
 		DSPoolTable.cleanup();
 		DSSkyBoxProva.cleanup();
         DSDoor.cleanup();
+		DSBanner.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -456,6 +463,7 @@ protected:
         TSnackMachine.cleanup();
         TPoolTable.cleanup();
         TDoor.cleanup();
+		TBanner.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
@@ -474,6 +482,7 @@ protected:
 		MPoolTable.cleanup();
         MSnackMachine.cleanup();
         MDoor.cleanup();
+		MBanner.cleanup();
 
 
 		// Cleanup descriptor set layouts
@@ -590,6 +599,11 @@ protected:
 		DSPoolLamp.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
+
+		MBanner.bind(commandBuffer);
+		DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
 
 		PRoom.bind(commandBuffer);
 
@@ -716,9 +730,9 @@ protected:
 		GameLogic();
 		
 		
-		gubo.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
+		gubo.DlightDir = glm::normalize(glm::vec3(0, 3, -3));
 		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
+		gubo.AmbLightColor = glm::vec3(0.0f); //0.05f
 		gubo.eyePos = Pos;
 		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
 		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
@@ -892,6 +906,15 @@ protected:
 		uboPoolLamp.mMat = World;
 		uboPoolLamp.nMat = glm::inverse(glm::transpose(World));
 		DSPoolLamp.map(currentImage, &uboPoolLamp, sizeof(uboPoolLamp), 0);
+
+		World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
+			translate(glm::mat4(1.0), glm::vec3(-4.0f, 2.0f, 10.6f)) *
+			glm::scale(glm::mat4(1), glm::vec3(2.0f, 2.0f, 2.0f));
+		uboBanner.amb = 1.0f; uboBanner.gamma = 180.0f; uboBanner.sColor = glm::vec3(1.0f);
+		uboBanner.mvpMat = Prj * View * World;
+		uboBanner.mMat = World;
+		uboBanner.nMat = glm::inverse(glm::transpose(World));
+		DSBanner.map(currentImage, &uboBanner, sizeof(uboBanner), 0);
 
 
 	}
