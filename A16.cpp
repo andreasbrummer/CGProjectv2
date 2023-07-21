@@ -1015,7 +1015,7 @@ protected:
 
 			uboPopup.visible = (rangeVideogame) ? 1.0f : 0.0f;
 			DSPopup.map(currentImage, &uboPopup, sizeof(uboPopup), 0);
-			break;
+			
 		World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
 			translate(glm::mat4(1.0), glm::vec3(-4.0f, 2.0f, 10.6f)) *
 			glm::scale(glm::mat4(1), glm::vec3(2.0f, 2.0f, 2.0f));
@@ -1025,13 +1025,14 @@ protected:
 		uboBanner.nMat = glm::inverse(glm::transpose(World));
 		DSBanner.map(currentImage, &uboBanner, sizeof(uboBanner), 0);
 
-		World = glm::scale(glm::mat4(1), glm::vec3(100.0f, 100.0f, 100.0f));
+		World =glm::scale(glm::mat4(1), glm::vec3(160.0f, 1.0f, 160.0f));
 		uboWorldFloor.amb = 1.0f; uboWorldFloor.gamma = 180.0f; uboWorldFloor.sColor = glm::vec3(1.0f);
 		uboWorldFloor.mvpMat = Prj * View * World;
 		uboWorldFloor.mMat = World;
 		uboWorldFloor.nMat = glm::inverse(glm::transpose(World));
 		DSWorldFloor.map(currentImage, &uboWorldFloor, sizeof(uboWorldFloor), 0);
 
+		break;
 
 		case 1:
 			
