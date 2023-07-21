@@ -98,7 +98,7 @@ protected:
 
 	Model<VertexOverlay> MPopup;
 
-	Model<VertexOverlay> MPongR, MPongL;
+	Model<VertexOverlay> MPongR, MPongL, MPongBall;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
@@ -106,7 +106,7 @@ protected:
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,DSWorldFloor;
 
 	DescriptorSet DSPopup;
-	DescriptorSet DSPongR, DSPongL;
+	DescriptorSet DSPongR, DSPongL, DSPongBall;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
@@ -128,7 +128,7 @@ protected:
 	GlobalUniformBlock gubo;
 
 	// Other application parameters
-	int currScene = 0;
+	int currScene = 1;
 	bool rangeVideogame;
 	glm::mat4 View = glm::mat4(1);
 	glm::mat4 Prj = glm::mat4(1);
@@ -140,10 +140,20 @@ protected:
 	//float RoomRot = 0.0;
 	float alpha[2] = { glm::radians(0.0f), 0.0f };
 	float beta[2] = { glm::radians(0.0f), 0.0f };
-	glm::vec2 pongPosR = glm::vec2(0, 0);
-	glm::vec2 pongPosL = glm::vec2(0, 0);
 	float pongLength = 0.5f;
 	float pongWidth = 0.05f;
+	//(-1,-1) <-- top-left, (1,1) <-- bottom-right, (1,-1) <-- top-right, (-1,1) <-- bottom_left
+	//xURR = x coordinate of upper-right vertix
+	float xURR = 0.9f;
+	float yURR = -pongLength / 2;
+	glm::vec2 pongPosR = glm::vec2(xURR - pongWidth/2, 0.0f);
+	//xULL = x coordinate of upper-left vertix
+	float xULL = -0.9f;
+	float yULL = -pongLength / 2;
+	glm::vec2 pongPosL = glm::vec2(xULL + pongWidth / 2, 0.0f);
+	glm::vec2 pongPosBall = glm::vec2(0.0f, 0.0f);
+	glm::vec2 pongVelBall = glm::vec2(0.0001f, 0.0001f);
+	float ballRadius = 0.03f;
 
 	//PROVA
 	// Jump parameters
@@ -181,16 +191,16 @@ protected:
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
-        // this array contains the bindings:
-        // first  element : the binding number
-        // second element : the type of element (buffer or texture)
-        //                  using the corresponding Vulkan constant
-        // third  element : the pipeline stage where it will be used
-        //                  using the corresponding Vulkan constant
+		// this array contains the bindings:
+		// first  element : the binding number
+		// second element : the type of element (buffer or texture)
+		//                  using the corresponding Vulkan constant
+		// third  element : the pipeline stage where it will be used
+		//                  using the corresponding Vulkan constant
 		DSLMesh.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-		});
+			});
 
 		DSLOverlay.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
@@ -199,39 +209,39 @@ protected:
 
 		DSLGubo.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-		});
+			});
 
 		DSLSimple.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-		});
+			});
 
 		// Vertex descriptors
-        // this array contains the bindings
-        // first  element : the binding number
-        // second element : the stride of this binging
-        // third  element : whether this parameter change per vertex or per instance
-        //                  using the corresponding Vulkan constant
-        // this array contains the location
-        // first  element : the binding number
-        // second element : the location number
-        // third  element : the offset of this element in the memory record
-        // fourth element : the data type of the element
-        //                  using the corresponding Vulkan constant
-        // fifth  elmenet : the size in byte of the element
-        // sixth  element : a constant defining the element usage
-        //                   POSITION - a vec3 with the position
-        //                   NORMAL   - a vec3 with the normal vector
-        //                   UV       - a vec2 with a UV coordinate
-        //                   COLOR    - a vec4 with a RGBA color
-        //                   TANGENT  - a vec4 with the tangent vector
-        //                   OTHER    - anything else
-        //
-        // ***************** DOUBLE CHECK ********************
-        //    That the Vertex data structure you use in the "offsetoff" and
-        //	in the "sizeof" in the previous array, refers to the correct one,
-        //	if you have more than one vertex format!
-        // ***************************************************
+		// this array contains the bindings
+		// first  element : the binding number
+		// second element : the stride of this binging
+		// third  element : whether this parameter change per vertex or per instance
+		//                  using the corresponding Vulkan constant
+		// this array contains the location
+		// first  element : the binding number
+		// second element : the location number
+		// third  element : the offset of this element in the memory record
+		// fourth element : the data type of the element
+		//                  using the corresponding Vulkan constant
+		// fifth  elmenet : the size in byte of the element
+		// sixth  element : a constant defining the element usage
+		//                   POSITION - a vec3 with the position
+		//                   NORMAL   - a vec3 with the normal vector
+		//                   UV       - a vec2 with a UV coordinate
+		//                   COLOR    - a vec4 with a RGBA color
+		//                   TANGENT  - a vec4 with the tangent vector
+		//                   OTHER    - anything else
+		//
+		// ***************** DOUBLE CHECK ********************
+		//    That the Vertex data structure you use in the "offsetoff" and
+		//	in the "sizeof" in the previous array, refers to the correct one,
+		//	if you have more than one vertex format!
+		// ***************************************************
 		VMesh.init(this, {
 			{0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
@@ -266,10 +276,10 @@ protected:
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLMesh});
-        PSkyBoxP.init(this, &VMesh, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLMesh});
-        PSkyBoxP.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
-                                     VK_CULL_MODE_NONE, false);
+		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLMesh });
+		PSkyBoxP.init(this, &VMesh, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLMesh });
+		PSkyBoxP.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
+			VK_CULL_MODE_NONE, false);
 		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
 		PRoom.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLMesh });
 
@@ -277,7 +287,7 @@ protected:
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PPong.init(this, &VOverlay, "shaders/PongVert.spv", "shaders/PongFrag.spv", {&DSLOverlay});
+		PPong.init(this, &VOverlay, "shaders/PongVert.spv", "shaders/PongFrag.spv", { &DSLOverlay });
 		PPong.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
@@ -288,52 +298,73 @@ protected:
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
 		MCabinet1.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
-        MCabinet2.init(this,&VMesh,"Models/Cabinet.obj",OBJ );
-        MAsteroids.init(this,&VMesh,"Models/Asteroids.obj",OBJ);
-        MDanceDance.init(this,&VMesh, "Models/DanceDance.obj", OBJ);
-        MBattleZone.init(this, &VMesh,"Models/BattleZone.obj", OBJ);
-        MNudge.init(this, &VMesh,"Models/Nudge.obj", OBJ);
+		MCabinet2.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
+		MAsteroids.init(this, &VMesh, "Models/Asteroids.obj", OBJ);
+		MDanceDance.init(this, &VMesh, "Models/DanceDance.obj", OBJ);
+		MBattleZone.init(this, &VMesh, "Models/BattleZone.obj", OBJ);
+		MNudge.init(this, &VMesh, "Models/Nudge.obj", OBJ);
 		MRoom.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
 		MDecoration.init(this, &VMesh, "Models/Decoration.obj", OBJ);
 		MCeiling.init(this, &VMesh, "Models/CeilingV3.obj", OBJ);
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
-		MCeilingLamp1.init(this, &VMesh, "Models/LampReverseN.obj",OBJ);
+		MCeilingLamp1.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
 		MCeilingLamp2.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
 		MPoolLamp.init(this, &VMesh, "Models/SpotLampV2.obj", OBJ);
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
-        MSkyBoxProva.init(this,&VMesh,"Models/SkyBoxCube.obj",OBJ);
-        MDoor.init(this,&VMesh,"Models/NewDoor.obj",OBJ);
+		MSkyBoxProva.init(this, &VMesh, "Models/SkyBoxCube.obj", OBJ);
+		MDoor.init(this, &VMesh, "Models/NewDoor.obj", OBJ);
 		MBanner.init(this, &VMesh, "Models/insegna.obj", OBJ);
 		MWorldFloor.init(this, &VMesh, "Models/WorldFloor.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
-		
+
 		//Mesh of the popup alert
 		MPopup.vertices = { {{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
 						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}} };
 		MPopup.indices = { 0, 1, 2,    1, 2, 3 };
 		MPopup.initMesh(this, &VOverlay);
 
-		float xURR = 0.9f;
-		float yURR = -pongLength/2;
+		
 
-		//(-1,-1) <-- top-left, (1,1) <-- bottom-right, (1,-1) <-- top-right, (-1,1) <-- bottom_left
-		//xURR = x coordinate of upper-right vertix
+
 		MPongR.vertices = { {{xURR, yURR}, {0.8f,0.0f}}, {{xURR - pongWidth, yURR}, {0.0f,1.0f}},
 						 {{xURR, yURR + pongLength}, {1.0f,0.0f}}, {{xURR - pongWidth, yURR + pongLength}, {1.0f,1.0f}} };
-		MPongR.indices = { 0, 1, 2, 1,2,3};
+		MPongR.indices = { 0, 1, 2, 1,2,3 };
 		MPongR.initMesh(this, &VOverlay);
 
-		//xULL = x coordinate of upper-left vertix
-		float xULL = -0.9f;
-		float yULL = -pongLength/2;
+		
 
-		//(-1,-1) <-- top-left, (1,1) <-- bottom-right, (1,-1) <-- top-right, (-1,1) <-- bottom_left
 		MPongL.vertices = { {{xULL, yULL}, {0.8f,0.0f}}, {{xULL + pongWidth, yULL}, {0.0f,1.0f}},
 						 {{xULL, yULL + pongLength}, {1.0f,0.0f}}, {{xULL + pongWidth, yULL + pongLength}, {1.0f,1.0f}} };
 		MPongL.indices = { 0, 1, 2, 1,2,3 };
 		MPongL.initMesh(this, &VOverlay);
+
+		int vertexNumber = 50;
+		float anglestep = 360.0f / vertexNumber;
+		//x center component
+		float xBall = 0.0f;
+		//y center component
+		float yBall = 0.0f;
+		//ball center
+		MPongBall.vertices.push_back({{xBall, Ar * yBall }, {0.0f, 0.0f}});
+		//first vertex
+		MPongBall.vertices.push_back({ {xBall + ballRadius, Ar * yBall}, {1.0f,0.0f}});
+
+		for (int i = 1; i < vertexNumber; i++){
+			MPongBall.vertices.push_back({{xBall + ballRadius * cos(glm::radians(i * anglestep)), Ar * (yBall + ballRadius * sin(glm::radians(i * anglestep)))},
+				{cos(glm::radians(i * anglestep)),sin(glm::radians(i * anglestep))}});
+
+			MPongBall.indices.push_back(0);
+			MPongBall.indices.push_back(i);
+			MPongBall.indices.push_back(i + 1);
+		}
+
+		MPongBall.indices.push_back(0);
+		MPongBall.indices.push_back(1);
+		MPongBall.indices.push_back(vertexNumber);
+
+		MPongBall.initMesh(this, &VOverlay);
 
 		// Create the textures
 		// The second parameter is the file name
@@ -490,6 +521,11 @@ protected:
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeilingLamp1}
 		});
+
+		DSPongBall.init(this, &DSLOverlay, {
+			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TCeilingLamp1}
+			});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -526,6 +562,7 @@ protected:
 		DSWorldFloor.cleanup();
 		DSPongR.cleanup();
 		DSPongL.cleanup();
+		DSPongBall.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -579,6 +616,7 @@ protected:
 		MWorldFloor.cleanup();
 		MPongR.cleanup();
 		MPongL.cleanup();
+		MPongBall.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -744,6 +782,12 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPongL.indices.size()), 1, 0, 0, 0);
 
+			MPongBall.bind(commandBuffer);
+
+			DSPongBall.bind(commandBuffer, PPong, 0, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPongBall.indices.size()), 1, 0, 0, 0);
+
 			break;
 		}
 
@@ -841,6 +885,18 @@ protected:
 			case 1:
 				float x = 0.0f;
 				float pongVel = 0.001f;
+
+				pongPosBall += pongVelBall;
+
+				if (pongPosBall.y + ballRadius <= -1.0f || pongPosBall.y + ballRadius >= 1.0f) {
+					pongVelBall.y *= -1.0f;
+				}
+				if (pongPosBall.x - ballRadius <= pongPosL.x + pongWidth/2) {
+					pongVelBall.x *= -1.0f;
+				}
+				if (pongPosBall.x + ballRadius >= pongPosR.x - pongWidth/2) {
+					pongVelBall.x *= -1.0f;
+				}
 
 				if (glfwGetKey(window, GLFW_KEY_W) && pongPosL.y > -1.0f + pongLength/2) {
 					pongPosL += glm::vec2(0, -pongVel);
@@ -1093,6 +1149,9 @@ protected:
 
 			uboPong.pPos = pongPosL;
 			DSPongL.map(currentImage, &uboPong, sizeof(uboPong), 0);
+
+			uboPong.pPos = pongPosBall;
+			DSPongBall.map(currentImage, &uboPong, sizeof(uboPong), 0);
 			
 			break;
 		}
