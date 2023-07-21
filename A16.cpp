@@ -87,8 +87,7 @@ protected:
 	VertexDescriptor VMesh,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh, POverlay, PSimple, PSkyBoxP;
-    Pipeline PRoom;
+	Pipeline PMesh, POverlay, PSimple, PSkyBoxP, PRoom;
 	Pipeline PPong;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -99,7 +98,7 @@ protected:
 
 	Model<VertexOverlay> MPopup;
 
-	Model<VertexOverlay> MPong;
+	Model<VertexOverlay> MPongR, MPongL;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
@@ -107,7 +106,7 @@ protected:
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,DSWorldFloor;
 
 	DescriptorSet DSPopup;
-	DescriptorSet DSPong;
+	DescriptorSet DSPongR, DSPongL;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
@@ -123,7 +122,8 @@ protected:
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
                      uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner,uboWorldFloor;
 
-	OverlayUniformBlock uboPopup, uboPong;
+	OverlayUniformBlock uboPopup;
+	PongUniformBlock uboPong;
 
 	GlobalUniformBlock gubo;
 
@@ -140,7 +140,10 @@ protected:
 	//float RoomRot = 0.0;
 	float alpha[2] = { glm::radians(0.0f), 0.0f };
 	float beta[2] = { glm::radians(0.0f), 0.0f };
-	glm::mat3 CamDir = glm::mat3(1.0f);
+	glm::vec2 pongPosR = glm::vec2(0, 0);
+	glm::vec2 pongPosL = glm::vec2(0, 0);
+	float pongLength = 0.5f;
+	float pongWidth = 0.05f;
 
 	//PROVA
 	// Jump parameters
@@ -187,16 +190,16 @@ protected:
 		DSLMesh.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
+		});
 
 		DSLOverlay.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
 
 		DSLGubo.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-			});
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
+		});
 
 		DSLSimple.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
@@ -275,6 +278,8 @@ protected:
 			VK_CULL_MODE_NONE, false);
 
 		PPong.init(this, &VOverlay, "shaders/PongVert.spv", "shaders/PongFrag.spv", {&DSLOverlay});
+		PPong.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
+			VK_CULL_MODE_NONE, false);
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -310,11 +315,25 @@ protected:
 		MPopup.indices = { 0, 1, 2,    1, 2, 3 };
 		MPopup.initMesh(this, &VOverlay);
 
+		float xURR = 0.9f;
+		float yURR = -pongLength/2;
 
-		MPong.vertices = { {{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
-						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}} };
-		MPong.indices = { 0, 1, 2,    1, 2, 3 };
-		MPong.initMesh(this, &VSimple);
+		//(-1,-1) <-- top-left, (1,1) <-- bottom-right, (1,-1) <-- top-right, (-1,1) <-- bottom_left
+		//xURR = x coordinate of upper-right vertix
+		MPongR.vertices = { {{xURR, yURR}, {0.8f,0.0f}}, {{xURR - pongWidth, yURR}, {0.0f,1.0f}},
+						 {{xURR, yURR + pongLength}, {1.0f,0.0f}}, {{xURR - pongWidth, yURR + pongLength}, {1.0f,1.0f}} };
+		MPongR.indices = { 0, 1, 2, 1,2,3};
+		MPongR.initMesh(this, &VOverlay);
+
+		//xULL = x coordinate of upper-left vertix
+		float xULL = -0.9f;
+		float yULL = -pongLength/2;
+
+		//(-1,-1) <-- top-left, (1,1) <-- bottom-right, (1,-1) <-- top-right, (-1,1) <-- bottom_left
+		MPongL.vertices = { {{xULL, yULL}, {0.8f,0.0f}}, {{xULL + pongWidth, yULL}, {0.0f,1.0f}},
+						 {{xULL, yULL + pongLength}, {1.0f,0.0f}}, {{xULL + pongWidth, yULL + pongLength}, {1.0f,1.0f}} };
+		MPongL.indices = { 0, 1, 2, 1,2,3 };
+		MPongL.initMesh(this, &VOverlay);
 
 		// Create the textures
 		// The second parameter is the file name
@@ -446,6 +465,7 @@ protected:
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TSnackMachine}
 		});
+
 		DSBanner.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TBanner}
@@ -455,12 +475,18 @@ protected:
 			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TPopup}
 		});
+
 		DSWorldFloor.init(this, &DSLMesh, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TWorldFloor}
 			});
 
-		DSPong.init(this, &DSLOverlay, {
+		DSPongR.init(this, &DSLOverlay, {
+			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TCeilingLamp1}
+		});
+
+		DSPongL.init(this, &DSLOverlay, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeilingLamp1}
 		});
@@ -498,7 +524,8 @@ protected:
 		DSPopup.cleanup();
 		DSBanner.cleanup();
 		DSWorldFloor.cleanup();
-		DSPong.cleanup();
+		DSPongR.cleanup();
+		DSPongL.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -550,7 +577,8 @@ protected:
 		
 		MPopup.cleanup();
 		MWorldFloor.cleanup();
-		MPong.cleanup();
+		MPongR.cleanup();
+		MPongL.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -670,18 +698,17 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
-		MBanner.bind(commandBuffer);
-		DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
+			MBanner.bind(commandBuffer);
+			DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
 
-		MWorldFloor.bind(commandBuffer);
-		DSWorldFloor.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MWorldFloor.indices.size()), 1, 0, 0, 0);
+			MWorldFloor.bind(commandBuffer);
+			DSWorldFloor.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MWorldFloor.indices.size()), 1, 0, 0, 0);
 
-
-		PRoom.bind(commandBuffer);
+			PRoom.bind(commandBuffer);
 
 			MRoom.bind(commandBuffer);
 			DSRoom.bind(commandBuffer, PRoom, 1, currentImage);
@@ -689,7 +716,6 @@ protected:
 				static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 
 			PSimple.bind(commandBuffer);
-
 
 			DSGubo.bind(commandBuffer, PSkyBoxP, 0, currentImage);
 			PSkyBoxP.bind(commandBuffer);
@@ -705,7 +731,19 @@ protected:
 				static_cast<uint32_t>(MPopup.indices.size()), 1, 0, 0, 0);
 			break;
 		case 1:
-			
+			PPong.bind(commandBuffer);
+			MPongR.bind(commandBuffer);
+
+			DSPongR.bind(commandBuffer, PPong, 0, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPongR.indices.size()), 1, 0, 0, 0);
+
+			MPongL.bind(commandBuffer);
+
+			DSPongL.bind(commandBuffer, PPong, 0, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPongL.indices.size()), 1, 0, 0, 0);
+
 			break;
 		}
 
@@ -801,7 +839,21 @@ protected:
 					glm::translate(glm::mat4(1.0), -cameraPos);
 				break;
 			case 1:
+				float x = 0.0f;
+				float pongVel = 0.001f;
 
+				if (glfwGetKey(window, GLFW_KEY_W) && pongPosL.y > -1.0f + pongLength/2) {
+					pongPosL += glm::vec2(0, -pongVel);
+				}
+				if (glfwGetKey(window, GLFW_KEY_S) && pongPosL.y < 1.0f - pongLength/2) {
+					pongPosL += glm::vec2(0, pongVel);
+				}
+				if (glfwGetKey(window, GLFW_KEY_UP) && pongPosR.y > -1.0f + pongLength/2) {
+					pongPosR += glm::vec2(0, -pongVel);
+				}
+				if (glfwGetKey(window, GLFW_KEY_DOWN) && pongPosR.y < 1.0f - pongLength/2) {
+					pongPosR += glm::vec2(0, pongVel);
+				}
 				break;
 		}
 		
@@ -1016,25 +1068,31 @@ protected:
 			uboPopup.visible = (rangeVideogame) ? 1.0f : 0.0f;
 			DSPopup.map(currentImage, &uboPopup, sizeof(uboPopup), 0);
 			
-		World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
+			World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
 			translate(glm::mat4(1.0), glm::vec3(-4.0f, 2.0f, 10.6f)) *
 			glm::scale(glm::mat4(1), glm::vec3(2.0f, 2.0f, 2.0f));
-		uboBanner.amb = 1.0f; uboBanner.gamma = 180.0f; uboBanner.sColor = glm::vec3(1.0f);
-		uboBanner.mvpMat = Prj * View * World;
-		uboBanner.mMat = World;
-		uboBanner.nMat = glm::inverse(glm::transpose(World));
-		DSBanner.map(currentImage, &uboBanner, sizeof(uboBanner), 0);
+			uboBanner.amb = 1.0f; uboBanner.gamma = 180.0f; uboBanner.sColor = glm::vec3(1.0f);
+			uboBanner.mvpMat = Prj * View * World;
+			uboBanner.mMat = World;
+			uboBanner.nMat = glm::inverse(glm::transpose(World));
+			DSBanner.map(currentImage, &uboBanner, sizeof(uboBanner), 0);
 
-		World =glm::scale(glm::mat4(1), glm::vec3(160.0f, 1.0f, 160.0f));
-		uboWorldFloor.amb = 1.0f; uboWorldFloor.gamma = 180.0f; uboWorldFloor.sColor = glm::vec3(1.0f);
-		uboWorldFloor.mvpMat = Prj * View * World;
-		uboWorldFloor.mMat = World;
-		uboWorldFloor.nMat = glm::inverse(glm::transpose(World));
-		DSWorldFloor.map(currentImage, &uboWorldFloor, sizeof(uboWorldFloor), 0);
+			World = glm::scale(glm::mat4(1), glm::vec3(160.0f, 1.0f, 160.0f));
+			uboWorldFloor.amb = 1.0f; uboWorldFloor.gamma = 180.0f; uboWorldFloor.sColor = glm::vec3(1.0f);
+			uboWorldFloor.mvpMat = Prj * View * World;
+			uboWorldFloor.mMat = World;
+			uboWorldFloor.nMat = glm::inverse(glm::transpose(World));
+			DSWorldFloor.map(currentImage, &uboWorldFloor, sizeof(uboWorldFloor), 0);
 
-		break;
+			break;
 
 		case 1:
+
+			uboPong.pPos = pongPosR;
+			DSPongR.map(currentImage, &uboPong, sizeof(uboPong), 0);
+
+			uboPong.pPos = pongPosL;
+			DSPongL.map(currentImage, &uboPong, sizeof(uboPong), 0);
 			
 			break;
 		}
