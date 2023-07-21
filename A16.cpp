@@ -90,20 +90,20 @@ protected:
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva,MBanner;
+                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva,MBanner,MWorldFloor;
 
 	Model<VertexOverlay> MPopup;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
-                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner;
+                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,DSWorldFloor;
 
 	DescriptorSet DSPopup;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
-            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,TBanner;
+            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,TBanner,TWorldFloor;
 
 	Texture TPopup;
 
@@ -112,7 +112,7 @@ protected:
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner;
+                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner,uboWorldFloor;
 
 	OverlayUniformBlock uboPopup;
 
@@ -153,9 +153,9 @@ protected:
 		initialBackgroundColor = { 0.0f, 0.005f, 0.01f, 1.0f };
 
 		// Descriptor pool sizes
-		uniformBlocksInPool = 100;
-		texturesInPool = 100;
-		setsInPool = 100;
+		uniformBlocksInPool = 110;
+		texturesInPool = 110;
+		setsInPool = 110;
 
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -287,6 +287,7 @@ protected:
         MSkyBoxProva.init(this,&VMesh,"Models/SkyBoxCube.obj",OBJ);
         MDoor.init(this,&VMesh,"Models/NewDoor.obj",OBJ);
 		MBanner.init(this, &VMesh, "Models/insegna.obj", OBJ);
+		MWorldFloor.init(this, &VMesh, "Models/WorldFloor.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 		
@@ -315,6 +316,7 @@ protected:
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/door.jpeg");
 		TBanner.init(this, "textures/insegna.jpg");
+		TWorldFloor.init(this, "textures/lightGreen.jpg");
 
 		TPopup.init(this, "textures/PressSpace.png");
 
@@ -433,6 +435,10 @@ protected:
 			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TPopup}
 		});
+		DSWorldFloor.init(this, &DSLMesh, {
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TWorldFloor}
+			});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -465,6 +471,7 @@ protected:
 
 		DSPopup.cleanup();
 		DSBanner.cleanup();
+		DSWorldFloor.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -491,8 +498,9 @@ protected:
         TPoolTable.cleanup();
         TDoor.cleanup();
 		TBanner.cleanup();
-
+		
 		TPopup.cleanup();
+		TWorldFloor.cleanup();
 
 		// Cleanup models
 		MCabinet1.cleanup();
@@ -512,8 +520,9 @@ protected:
         MSnackMachine.cleanup();
         MDoor.cleanup();
 		MBanner.cleanup();
-
+		
 		MPopup.cleanup();
+		MWorldFloor.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -636,6 +645,12 @@ protected:
 		DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
+
+		MWorldFloor.bind(commandBuffer);
+		DSWorldFloor.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MWorldFloor.indices.size()), 1, 0, 0, 0);
+
 
 		PRoom.bind(commandBuffer);
 
@@ -973,6 +988,13 @@ protected:
 		uboBanner.mMat = World;
 		uboBanner.nMat = glm::inverse(glm::transpose(World));
 		DSBanner.map(currentImage, &uboBanner, sizeof(uboBanner), 0);
+
+		World = glm::scale(glm::mat4(1), glm::vec3(100.0f, 100.0f, 100.0f));
+		uboWorldFloor.amb = 1.0f; uboWorldFloor.gamma = 180.0f; uboWorldFloor.sColor = glm::vec3(1.0f);
+		uboWorldFloor.mvpMat = Prj * View * World;
+		uboWorldFloor.mMat = World;
+		uboWorldFloor.nMat = glm::inverse(glm::transpose(World));
+		DSWorldFloor.map(currentImage, &uboWorldFloor, sizeof(uboWorldFloor), 0);
 
 
 		case 1:
