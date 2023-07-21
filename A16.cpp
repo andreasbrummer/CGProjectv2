@@ -90,20 +90,20 @@ protected:
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva;
+                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva,MBanner;
 
 	Model<VertexOverlay> MPopup;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
-                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva;
+                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner;
 
 	DescriptorSet DSPopup;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
-            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor;
+            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,TBanner;
 
 	Texture TPopup;
 
@@ -112,7 +112,7 @@ protected:
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva;
+                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner;
 
 	OverlayUniformBlock uboPopup;
 
@@ -286,6 +286,7 @@ protected:
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
         MSkyBoxProva.init(this,&VMesh,"Models/SkyBoxCube.obj",OBJ);
         MDoor.init(this,&VMesh,"Models/NewDoor.obj",OBJ);
+		MBanner.init(this, &VMesh, "Models/insegna.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 		
@@ -313,6 +314,7 @@ protected:
         TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/door.jpeg");
+		TBanner.init(this, "textures/insegna.jpg");
 
 		TPopup.init(this, "textures/PressSpace.png");
 
@@ -422,6 +424,10 @@ protected:
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TSnackMachine}
 		});
+		DSBanner.init(this, &DSLSimple, {
+			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TBanner}
+			});
 
 		DSPopup.init(this, &DSLOverlay, {
 			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
@@ -458,6 +464,7 @@ protected:
         DSDoor.cleanup();
 
 		DSPopup.cleanup();
+		DSBanner.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -483,6 +490,7 @@ protected:
         TSnackMachine.cleanup();
         TPoolTable.cleanup();
         TDoor.cleanup();
+		TBanner.cleanup();
 
 		TPopup.cleanup();
 
@@ -503,6 +511,7 @@ protected:
 		MPoolTable.cleanup();
         MSnackMachine.cleanup();
         MDoor.cleanup();
+		MBanner.cleanup();
 
 		MPopup.cleanup();
 
@@ -623,7 +632,12 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
-			PRoom.bind(commandBuffer);
+		MBanner.bind(commandBuffer);
+		DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
+
+		PRoom.bind(commandBuffer);
 
 			MRoom.bind(commandBuffer);
 			DSRoom.bind(commandBuffer, PRoom, 1, currentImage);
@@ -772,7 +786,7 @@ protected:
 		
 		GameLogic();
 		
-		gubo.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
+		gubo.DlightDir = glm::normalize(glm::vec3(0, 3, -3));
 		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
 		gubo.eyePos = Pos[currScene];
@@ -951,6 +965,15 @@ protected:
 			uboPopup.visible = (rangeVideogame) ? 1.0f : 0.0f;
 			DSPopup.map(currentImage, &uboPopup, sizeof(uboPopup), 0);
 			break;
+		World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
+			translate(glm::mat4(1.0), glm::vec3(-4.0f, 2.0f, 10.6f)) *
+			glm::scale(glm::mat4(1), glm::vec3(2.0f, 2.0f, 2.0f));
+		uboBanner.amb = 1.0f; uboBanner.gamma = 180.0f; uboBanner.sColor = glm::vec3(1.0f);
+		uboBanner.mvpMat = Prj * View * World;
+		uboBanner.mMat = World;
+		uboBanner.nMat = glm::inverse(glm::transpose(World));
+		DSBanner.map(currentImage, &uboBanner, sizeof(uboBanner), 0);
+
 
 		case 1:
 			
