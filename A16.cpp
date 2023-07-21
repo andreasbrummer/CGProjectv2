@@ -92,14 +92,20 @@ protected:
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
                       MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva;
 
+	Model<VertexOverlay> MPopup;
+
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva;
 
+	DescriptorSet DSPopup;
+
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
             TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor;
+
+	Texture TPopup;
 
 
 	// C++ storage for uniform variables
@@ -108,19 +114,23 @@ protected:
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
                      uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva;
 
+	OverlayUniformBlock uboPopup;
+
 	GlobalUniformBlock gubo;
 
 	// Other application parameters
 	int currScene = 0;
-	int gameState = 0;
+	bool rangeVideogame;
 	glm::mat4 View = glm::mat4(1);
 	glm::mat4 Prj = glm::mat4(1);
 	glm::mat4 World = glm::mat4(1);
-	glm::vec3 Pos = glm::vec3(12, 0, -25);
+	glm::vec3 Pos[2] = { glm::vec3(12,0,-25), glm::vec3(0,0,6) };
 	glm::vec3 cameraPos;
-	float alpha;
-	float beta;
-	float RoomRot = 0.0;
+	//float alpha;
+	//float beta;
+	//float RoomRot = 0.0;
+	float alpha[2] = { glm::radians(0.0f), 0.0f };
+	float beta[2] = { glm::radians(0.0f), 0.0f };
 	glm::mat3 CamDir = glm::mat3(1.0f);
 
 	//PROVA
@@ -237,7 +247,6 @@ protected:
 					 sizeof(glm::vec2), UV}
 			});
 
-
 		// Pipelines [Shader couples]
 		// The second parameter is the pointer to the vertex definition
 		// Third and fourth parameters are respectively the vertex and fragment shaders
@@ -247,15 +256,12 @@ protected:
         PSkyBoxP.init(this, &VMesh, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLMesh});
         PSkyBoxP.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
                                      VK_CULL_MODE_NONE, false);
-
-        POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
+		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
 		PRoom.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLMesh });
+
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
-
-		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
-
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -278,10 +284,16 @@ protected:
 		MPoolLamp.init(this, &VMesh, "Models/SpotLampV2.obj", OBJ);
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
-        MDoor.init(this,&VMesh,"Models/door.obj",OBJ);
-        MSkyBoxProva.init(this,&VMesh,"Models/skybox_cube.obj",OBJ);
+        MSkyBoxProva.init(this,&VMesh,"Models/SkyBoxCube.obj",OBJ);
         MDoor.init(this,&VMesh,"Models/NewDoor.obj",OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
+
+		
+		//Mesh of the popup alert
+		MPopup.vertices = { {{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
+						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}} };
+		MPopup.indices = { 0, 1, 2,    1, 2, 3 };
+		MPopup.initMesh(this, &VOverlay);
 
 		// Create the textures
 		// The second parameter is the file name
@@ -302,13 +314,15 @@ protected:
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/door.jpeg");
 
+		TPopup.init(this, "textures/PressSpace.png");
+
 		const char* T2fn[] = { "textures/sky/px.png", "textures/sky/nx.png",
 							  "textures/sky/py.png",   "textures/sky/ny.png",
 							  "textures/sky/pz.png", "textures/sky/nz.png" };
 		TskyBox.initCubic(this, T2fn);
 		// Init local variables
-		alpha = glm::radians(180.0f);
-		beta = 0.0f;
+		alpha[currScene] = glm::radians(180.0f);
+		beta[currScene] = 0.0f;
 	}
 
 	// Here you create your pipelines and Descriptor Sets!
@@ -319,69 +333,76 @@ protected:
 		PSimple.create();
 		PRoom.create();
         PSkyBoxP.create();
+
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCabinet}
 		});
+
         DSCabinet2.init(this, &DSLSimple, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TCabinet}
+            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &TCabinet}
         });
+
         DSAsteroids.init(this, &DSLSimple, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TAsteroids}
+            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &TAsteroids}
         });
+
         DSDanceDance.init(this, &DSLSimple, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TDanceDance}
+            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &TDanceDance}
         });
         DSBattleZone.init(this, &DSLSimple, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TBattleZone}
+            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &TBattleZone}
         });
+
         DSNudge.init(this, &DSLSimple, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TNudge}
+            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &TNudge}
         });
 
         DSDoor.init(this, &DSLSimple, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TDoor}
+            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &TDoor}
         });
 		
 		DSRoom.init(this, &DSLSimple, {
-				{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
-				{1, TEXTURE, 0, &TRoom},
+			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TRoom},
 		});
 
 		DSDecoration.init(this, &DSLSimple, {
-				{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
-				{1, TEXTURE, 0, &TDecoration},
-			});
+			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TDecoration},
+		});
 
 		DSCeiling.init(this, &DSLMesh, {
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeiling}
 		});
+
 		DSFloor.init(this, &DSLMesh, {
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TFloor}
 		});
+
         DSSkyBoxProva.init(this, &DSLMesh, {
-                {0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TskyBox}
+            {0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+            {1, TEXTURE, 0, &TskyBox}
         });
 
 		DSGubo.init(this, &DSLGubo, {
 			{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 		});
 
-
 		DSCeilingLamp1.init(this, &DSLMesh, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeilingLamp1}
 		});
+
 		DSCeilingLamp2.init(this, &DSLMesh, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeilingLamp2}
@@ -402,6 +423,10 @@ protected:
 			{1, TEXTURE, 0, &TSnackMachine}
 		});
 
+		DSPopup.init(this, &DSLOverlay, {
+			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TPopup}
+		});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -431,6 +456,8 @@ protected:
 		DSPoolTable.cleanup();
 		DSSkyBoxProva.cleanup();
         DSDoor.cleanup();
+
+		DSPopup.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -457,6 +484,8 @@ protected:
         TPoolTable.cleanup();
         TDoor.cleanup();
 
+		TPopup.cleanup();
+
 		// Cleanup models
 		MCabinet1.cleanup();
         MCabinet2.cleanup();
@@ -475,6 +504,7 @@ protected:
         MSnackMachine.cleanup();
         MDoor.cleanup();
 
+		MPopup.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -496,118 +526,130 @@ protected:
 	// with their buffers and textures
 
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
-		// sets global uniforms (see below from parameters explanation)
-		DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+		switch (currScene) {
+		case 0:
+			// sets global uniforms (see below from parameters explanation)
+			DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 
-		// binds the pipeline
-		PMesh.bind(commandBuffer);
-		// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
-		// binds the model
-		// For a Model object, this command binds the corresponing index and vertex buffer
-		// to the command buffer passed in its parameter
+			// binds the pipeline
+			PMesh.bind(commandBuffer);
+			// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
+			// binds the model
+			// For a Model object, this command binds the corresponing index and vertex buffer
+			// to the command buffer passed in its parameter
 
-		// binds the data set
-		// For a Dataset object, this command binds the corresponing dataset
-		// to the command buffer and pipeline passed in its first and second parameters.
-		// The third parameter is the number of the set being bound
-		// As described in the Vulkan tutorial, a different dataset is required for each image in the swap chain.
-		// This is done automatically in file Starter.hpp, however the command here needs also the index
-		// of the current image in the swap chain, passed in its last parameter
+			// binds the data set
+			// For a Dataset object, this command binds the corresponing dataset
+			// to the command buffer and pipeline passed in its first and second parameters.
+			// The third parameter is the number of the set being bound
+			// As described in the Vulkan tutorial, a different dataset is required for each image in the swap chain.
+			// This is done automatically in file Starter.hpp, however the command here needs also the index
+			// of the current image in the swap chain, passed in its last parameter
 
-		// record the drawing command in the command bufferun
-		// the second parameter is the number of indexes to be drawn. For a Model object,
-		// this can be retrieved with the .indices.size() method.
+			// record the drawing command in the command bufferun
+			// the second parameter is the number of indexes to be drawn. For a Model object,
+			// this can be retrieved with the .indices.size() method.
 
 
-		MCabinet1.bind(commandBuffer);
-		DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCabinet1.indices.size()), 1, 0, 0, 0);
-        MCabinet2.bind(commandBuffer);
-        DSCabinet2.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MCabinet2.indices.size()), 1, 0, 0, 0);
-        MAsteroids.bind(commandBuffer);
-        DSAsteroids.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MAsteroids.indices.size()), 1, 0, 0, 0);
+			MCabinet1.bind(commandBuffer);
+			DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCabinet1.indices.size()), 1, 0, 0, 0);
+			MCabinet2.bind(commandBuffer);
+			DSCabinet2.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCabinet2.indices.size()), 1, 0, 0, 0);
+			MAsteroids.bind(commandBuffer);
+			DSAsteroids.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MAsteroids.indices.size()), 1, 0, 0, 0);
 
-        MDanceDance.bind(commandBuffer);
-        DSDanceDance.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MDanceDance.indices.size()), 1, 0, 0, 0);
+			MDanceDance.bind(commandBuffer);
+			DSDanceDance.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MDanceDance.indices.size()), 1, 0, 0, 0);
 
-        MBattleZone.bind(commandBuffer);
-        DSBattleZone.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MBattleZone.indices.size()), 1, 0, 0, 0);
+			MBattleZone.bind(commandBuffer);
+			DSBattleZone.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MBattleZone.indices.size()), 1, 0, 0, 0);
 
-        MNudge.bind(commandBuffer);
-        DSNudge.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MNudge.indices.size()), 1, 0, 0, 0);
+			MNudge.bind(commandBuffer);
+			DSNudge.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MNudge.indices.size()), 1, 0, 0, 0);
 
-        MSnackMachine.bind(commandBuffer);
-        DSSnackMachine.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
+			MSnackMachine.bind(commandBuffer);
+			DSSnackMachine.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
 
-        MPoolTable.bind(commandBuffer);
-        DSPoolTable.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
-        MDoor.bind(commandBuffer);
-        DSDoor.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
+			MPoolTable.bind(commandBuffer);
+			DSPoolTable.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
+			MDoor.bind(commandBuffer);
+			DSDoor.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
-		MDecoration.bind(commandBuffer);
-		DSDecoration.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MDecoration.indices.size()), 1, 0, 0, 0);
+			MDecoration.bind(commandBuffer);
+			DSDecoration.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MDecoration.indices.size()), 1, 0, 0, 0);
 
-		MCeiling.bind(commandBuffer);
-		DSCeiling.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCeiling.indices.size()), 1, 0, 0, 0);
+			MCeiling.bind(commandBuffer);
+			DSCeiling.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCeiling.indices.size()), 1, 0, 0, 0);
 
-		MFloor.bind(commandBuffer);
-		DSFloor.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
+			MFloor.bind(commandBuffer);
+			DSFloor.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
 
-		MCeilingLamp1.bind(commandBuffer);
-		DSCeilingLamp1.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
+			MCeilingLamp1.bind(commandBuffer);
+			DSCeilingLamp1.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
 
-		MCeilingLamp2.bind(commandBuffer);
-		DSCeilingLamp2.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
+			MCeilingLamp2.bind(commandBuffer);
+			DSCeilingLamp2.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
 
-		MPoolLamp.bind(commandBuffer);
-		DSPoolLamp.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
+			MPoolLamp.bind(commandBuffer);
+			DSPoolLamp.bind(commandBuffer, PMesh, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
-		PRoom.bind(commandBuffer);
+			PRoom.bind(commandBuffer);
 
-		MRoom.bind(commandBuffer);
-		DSRoom.bind(commandBuffer, PRoom, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
+			MRoom.bind(commandBuffer);
+			DSRoom.bind(commandBuffer, PRoom, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
 
-		PSimple.bind(commandBuffer);
+			PSimple.bind(commandBuffer);
 
 
-        DSGubo.bind(commandBuffer,PSkyBoxP,0,currentImage);
-        PSkyBoxP.bind(commandBuffer);
-        MSkyBoxProva.bind(commandBuffer);
-        DSSkyBoxProva.bind(commandBuffer, PSkyBoxP, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MSkyBoxProva.indices.size()), 1, 0, 0, 0);
+			DSGubo.bind(commandBuffer, PSkyBoxP, 0, currentImage);
+			PSkyBoxP.bind(commandBuffer);
+			MSkyBoxProva.bind(commandBuffer);
+			DSSkyBoxProva.bind(commandBuffer, PSkyBoxP, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MSkyBoxProva.indices.size()), 1, 0, 0, 0);
 
+			POverlay.bind(commandBuffer);
+			MPopup.bind(commandBuffer);
+			DSPopup.bind(commandBuffer, POverlay, 0, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPopup.indices.size()), 1, 0, 0, 0);
+			break;
+		case 1:
+			
+			break;
+		}
 
     }
 
@@ -643,14 +685,15 @@ protected:
 			MOVE_SPEED = 2.0f;
 		}
 
-		// Jumping
+		/*// Jumping
 		if (glfwGetKey(window, GLFW_KEY_SPACE) && !isJumping) {
 			// Start the jump
 			isJumping = true;
 			jumpVelocity = sqrt(2.0f * gravity * jumpHeight);  // Calculate the initial velocity based on the desired jump height
 			jumpTime = 0.0f;
-		}
+		}*/
 
+		/*
 		// Check if the player is currently jumping
 		if (isJumping) {
 			// Update the jump time
@@ -673,53 +716,66 @@ protected:
 				// Ensure the player is on the ground level
 				Pos.y = 0.0f;
 			}
-		}
-
+		}*/
 
 		// Rotation
-
-		alpha = alpha - ROT_SPEED * deltaT * r.y;
-		beta = beta - ROT_SPEED * deltaT * r.x;
-		beta = beta < glm::radians(-90.0f) ? glm::radians(-90.0f) :
-			(beta > glm::radians(90.0f) ? glm::radians(90.0f) : beta);
-
-
+		alpha[currScene] = alpha[currScene] - ROT_SPEED * deltaT * r.y;
+		beta[currScene] = beta[currScene] - ROT_SPEED * deltaT * r.x;
+		beta[currScene] = beta[currScene] < glm::radians(-90.0f) ? glm::radians(-90.0f) :
+			(beta[currScene] > glm::radians(90.0f) ? glm::radians(90.0f) : beta[currScene]);
 
 		// Position
-		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
-		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
-		Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
-		Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
-		//Pos.y = 0.0f; //DEBUG
-		Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
-		cameraPos = Pos + glm::vec3(0, camHeight, 0);
+		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
+		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
+		Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.x * ux * deltaT;
+		Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
+		//Pos[currScene].y = 0.0f;
+		Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.z * uz * deltaT;
+		cameraPos = Pos[currScene] + glm::vec3(0, camHeight, 0);
 
-		// Projection
 		Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 		Prj[1][1] *= -1;
 
 		View =  //glm::rotate(glm::mat4(1.0),-rho,glm::vec3(0,0,1)) *
-			glm::rotate(glm::mat4(1.0), -beta, glm::vec3(1, 0, 0)) *
-			glm::rotate(glm::mat4(1.0), -alpha, glm::vec3(0, 1, 0)) *
+			glm::rotate(glm::mat4(1.0), -beta[currScene], glm::vec3(1, 0, 0)) *
+			glm::rotate(glm::mat4(1.0), -alpha[currScene], glm::vec3(0, 1, 0)) *
 			glm::translate(glm::mat4(1.0), -cameraPos);
-
-
 
 	}
 	// Here is where you update the uniforms.
 	// Very likely this will be where you will be writing the logic of your application.
 	void updateUniformBuffer(uint32_t currentImage) {
-		// Standard procedure to quit when the ESC key is pressed
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+		static bool debounce = false;
+		static int curDebounce = 0;
+
+		bool rangeVideogame = Pos[0].x < 5.5f && Pos[0].x > 0.0f && Pos[0].z < 0.0f && Pos[0].z > -2.5f;
+
+		if (glfwGetKey(window, GLFW_KEY_SPACE) && currScene == 0 && rangeVideogame || glfwGetKey(window, GLFW_KEY_SPACE) && currScene == 1) {
+			if (!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_SPACE;
+				currScene = (currScene + 1) % 2;
+				std::cout << "Scene : " << currScene << "\n";
+				RebuildPipeline();
+			}
+		}
+		else {
+			if ((curDebounce == GLFW_KEY_SPACE) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) && currScene == 0) {
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-		GameLogic();
 		
+		GameLogic();
 		
 		gubo.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
 		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
-		gubo.eyePos = Pos;
+		gubo.eyePos = Pos[currScene];
 		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
 		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -731,169 +787,176 @@ protected:
 		gubo.SLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.SLightPos = glm::vec3(10.0f, 3.0f, 1.0f);
 
+		switch (currScene) {
+		case 0:
+			DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
+			// the .map() method of a DataSet object, requires the current image of the swap chain as first parameter
+			// the second parameter is the pointer to the C++ data structure to transfer to the GPU
+			// the third parameter is its size
+			// the fourth parameter is the location inside the descriptor set of this uniform block
+
+			World = /*glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.0f)) **/
+				glm::scale(glm::mat4(1), glm::vec3(150.0f));
+
+			uboSkyboxProva.amb = 1.0f; uboSkyboxProva.gamma = 180.0f; uboSkyboxProva.sColor = glm::vec3(1.0f);
+			uboSkyboxProva.mvpMat = Prj * View * World;
+			uboSkyboxProva.mMat = World;
+			uboSkyboxProva.nMat = glm::inverse(glm::transpose(World));
+			DSSkyBoxProva.map(currentImage, &uboSkyboxProva, sizeof(uboSkyboxProva), 0);
+
+			World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -1.2f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+			uboCabinet1.amb = 1.0f; uboCabinet1.gamma = 180.0f; uboCabinet1.sColor = glm::vec3(1.0f);
+			uboCabinet1.mvpMat = Prj * View * World;
+			uboCabinet1.mMat = World;
+			uboCabinet1.nMat = glm::inverse(glm::transpose(World));
+			DSCabinet.map(currentImage, &uboCabinet1, sizeof(uboCabinet1), 0);
+
+			World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -9.2f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+			uboCabinet2.amb = 1.0f; uboCabinet2.gamma = 180.0f; uboCabinet2.sColor = glm::vec3(1.0f);
+			uboCabinet2.mvpMat = Prj * View * World;
+			uboCabinet2.mMat = World;
+			uboCabinet2.nMat = glm::inverse(glm::transpose(World));
+			DSCabinet2.map(currentImage, &uboCabinet2, sizeof(uboCabinet2), 0);
+
+			World = glm::translate(glm::mat4(1.0), glm::vec3(0.8, 0.7f, -7.2f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+			uboAsteroids.amb = 1.0f; uboAsteroids.gamma = 180.0f; uboAsteroids.sColor = glm::vec3(1.0f);
+			uboAsteroids.mvpMat = Prj * View * World;
+			uboAsteroids.mMat = World;
+			uboAsteroids.nMat = glm::inverse(glm::transpose(World));
+			DSAsteroids.map(currentImage, &uboAsteroids, sizeof(uboAsteroids), 0);
+
+			World = glm::rotate(glm::mat4(1.0), glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
+				glm::translate(glm::mat4(1.0), glm::vec3(-3.2, 1.7f, -0.5f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.018f));
+
+			uboBattleZone.amb = 1.0f; uboBattleZone.gamma = 180.0f; uboBattleZone.sColor = glm::vec3(1.0f);
+			uboBattleZone.mvpMat = Prj * View * World;
+			uboBattleZone.mMat = World;
+			uboBattleZone.nMat = glm::inverse(glm::transpose(World));
+			DSBattleZone.map(currentImage, &uboBattleZone, sizeof(uboBattleZone), 0);
+
+			World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
+				glm::translate(glm::mat4(1.0), glm::vec3(5.3f, -0.1f, 0.7f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.018f)); //0.018
+
+			uboNudge.amb = 1.0f; uboNudge.gamma = 180.0f; uboNudge.sColor = glm::vec3(1.0f);
+			uboNudge.mvpMat = Prj * View * World;
+			uboNudge.mMat = World;
+			uboNudge.nMat = glm::inverse(glm::transpose(World));
+			DSNudge.map(currentImage, &uboNudge, sizeof(uboNudge), 0);
 
 
-		// Writes value to the GPU
-		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
-		// the .map() method of a DataSet object, requires the current image of the swap chain as first parameter
-		// the second parameter is the pointer to the C++ data structure to transfer to the GPU
-		// the third parameter is its size
-		// the fourth parameter is the location inside the descriptor set of this uniform block
+			World = glm::rotate(glm::mat4(1.0), glm::radians(-0.1f), glm::vec3(0, 1, 0)) *
+				glm::translate(glm::mat4(1.0), glm::vec3(5.5f, 0.0f, -8.5f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.5f));
 
-        World = /*glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.0f)) **/
-                glm::scale(glm::mat4(1), glm::vec3(150.0f));
+			uboDanceDace.amb = 1.0f; uboDanceDace.gamma = 180.0f; uboDanceDace.sColor = glm::vec3(1.0f);
+			uboDanceDace.mvpMat = Prj * View * World;
+			uboDanceDace.mMat = World;
+			uboDanceDace.nMat = glm::inverse(glm::transpose(World));
+			DSDanceDance.map(currentImage, &uboDanceDace, sizeof(uboDanceDace), 0);
 
-        uboSkyboxProva.amb = 1.0f; uboSkyboxProva.gamma = 180.0f; uboSkyboxProva.sColor = glm::vec3(1.0f);
-        uboSkyboxProva.mvpMat = Prj * View * World;
-        uboSkyboxProva.mMat = World;
-        uboSkyboxProva.nMat = glm::inverse(glm::transpose(World));
-        DSSkyBoxProva.map(currentImage, &uboSkyboxProva, sizeof(uboSkyboxProva), 0);
-
-		World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -1.2f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.018f));
-
-		uboCabinet1.amb = 1.0f; uboCabinet1.gamma = 180.0f; uboCabinet1.sColor = glm::vec3(1.0f);
-		uboCabinet1.mvpMat = Prj * View * World;
-		uboCabinet1.mMat = World;
-		uboCabinet1.nMat = glm::inverse(glm::transpose(World));
-		DSCabinet.map(currentImage, &uboCabinet1, sizeof(uboCabinet1), 0);
-
-        World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -9.2f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.018f));
-
-        uboCabinet2.amb = 1.0f; uboCabinet2.gamma = 180.0f; uboCabinet2.sColor = glm::vec3(1.0f);
-        uboCabinet2.mvpMat = Prj * View * World;
-        uboCabinet2.mMat = World;
-        uboCabinet2.nMat = glm::inverse(glm::transpose(World));
-        DSCabinet2.map(currentImage, &uboCabinet2, sizeof(uboCabinet2), 0);
-
-        World = glm::translate(glm::mat4(1.0), glm::vec3(0.8, 0.7f, -7.2f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.018f));
-
-        uboAsteroids.amb = 1.0f; uboAsteroids.gamma = 180.0f; uboAsteroids.sColor = glm::vec3(1.0f);
-        uboAsteroids.mvpMat = Prj * View * World;
-        uboAsteroids.mMat = World;
-        uboAsteroids.nMat = glm::inverse(glm::transpose(World));
-        DSAsteroids.map(currentImage, &uboAsteroids, sizeof(uboAsteroids), 0);
-
-        World = glm::rotate(glm::mat4(1.0), glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
-                glm::translate(glm::mat4(1.0), glm::vec3(-3.2, 1.7f, -0.5f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.018f));
-
-        uboBattleZone.amb = 1.0f; uboBattleZone.gamma = 180.0f; uboBattleZone.sColor = glm::vec3(1.0f);
-        uboBattleZone.mvpMat = Prj * View * World;
-        uboBattleZone.mMat = World;
-        uboBattleZone.nMat = glm::inverse(glm::transpose(World));
-        DSBattleZone.map(currentImage, &uboBattleZone, sizeof(uboBattleZone), 0);
-
-        World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
-                glm::translate(glm::mat4(1.0), glm::vec3(5.3f, -0.1f, 0.7f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.018f)); //0.018
-
-        uboNudge.amb = 1.0f; uboNudge.gamma = 180.0f; uboNudge.sColor = glm::vec3(1.0f);
-        uboNudge.mvpMat = Prj * View * World;
-        uboNudge.mMat = World;
-        uboNudge.nMat = glm::inverse(glm::transpose(World));
-        DSNudge.map(currentImage, &uboNudge, sizeof(uboNudge), 0);
-
-
-        World = glm::rotate(glm::mat4(1.0), glm::radians(-0.1f), glm::vec3(0, 1, 0)) *
-                glm::translate(glm::mat4(1.0), glm::vec3(5.5f, 0.0f, -8.5f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.5f));
-
-        uboDanceDace.amb = 1.0f; uboDanceDace.gamma = 180.0f; uboDanceDace.sColor = glm::vec3(1.0f);
-        uboDanceDace.mvpMat = Prj * View * World;
-        uboDanceDace.mMat = World;
-        uboDanceDace.nMat = glm::inverse(glm::transpose(World));
-        DSDanceDance.map(currentImage, &uboDanceDace, sizeof(uboDanceDace), 0);
-
-		World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
-			    glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) *
-                glm::scale(glm::mat4(1), glm::vec3(0.0065f));
+			World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
+				glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.0065f));
 
 
 
-        World = translate(glm::mat4(1.0), glm::vec3(14.0f, 0.0f, -9.5f)) *
-                glm::scale(glm::mat4(1), glm::vec3(12.0f));
-        uboSnackMachine.amb = 1.0f; uboSnackMachine.gamma = 180.0f; uboSnackMachine.sColor = glm::vec3(1.0f);
-        uboSnackMachine.mvpMat = Prj * View * World;
-        uboSnackMachine.mMat = World;
-        uboSnackMachine.nMat = glm::inverse(glm::transpose(World));
-        DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
+			World = translate(glm::mat4(1.0), glm::vec3(14.0f, 0.0f, -9.5f)) *
+				glm::scale(glm::mat4(1), glm::vec3(12.0f));
+			uboSnackMachine.amb = 1.0f; uboSnackMachine.gamma = 180.0f; uboSnackMachine.sColor = glm::vec3(1.0f);
+			uboSnackMachine.mvpMat = Prj * View * World;
+			uboSnackMachine.mMat = World;
+			uboSnackMachine.nMat = glm::inverse(glm::transpose(World));
+			DSSnackMachine.map(currentImage, &uboSnackMachine, sizeof(uboSnackMachine), 0);
 
-        World = rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
-                translate(glm::mat4(1.0), glm::vec3(10.0f, 0.0f, 1.0f)) *
-                glm::scale(glm::mat4(1), glm::vec3(1.5f));
-        uboPoolTable.amb = 1.0f; uboPoolTable.gamma = 180.0f; uboPoolTable.sColor = glm::vec3(1.0f);
-        uboPoolTable.mvpMat = Prj * View * World;
-        uboPoolTable.mMat = World;
-        uboPoolTable.nMat = glm::inverse(glm::transpose(World));
-        DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
+			World = rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
+				translate(glm::mat4(1.0), glm::vec3(10.0f, 0.0f, 1.0f)) *
+				glm::scale(glm::mat4(1), glm::vec3(1.5f));
+			uboPoolTable.amb = 1.0f; uboPoolTable.gamma = 180.0f; uboPoolTable.sColor = glm::vec3(1.0f);
+			uboPoolTable.mvpMat = Prj * View * World;
+			uboPoolTable.mMat = World;
+			uboPoolTable.nMat = glm::inverse(glm::transpose(World));
+			DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
 
-        World = //rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
-                translate(glm::mat4(1.0), glm::vec3(10.6f, 0.0f, -10.5f)) *
-                glm::scale(glm::mat4(1), glm::vec3(1.7f,0.9f,1.0f));
-        uboDoor.amb = 1.0f; uboDoor.gamma = 180.0f; uboDoor.sColor = glm::vec3(1.0f);
-        uboDoor.mvpMat = Prj * View * World;
-        uboDoor.mMat = World;
-        uboDoor.nMat = glm::inverse(glm::transpose(World));
-        DSDoor.map(currentImage, &uboDoor, sizeof(uboDoor), 0);
-
-
-        World = glm::mat4(1);
-		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
-		uboRoom.mvpMat = Prj * View * World;
-		uboRoom.mMat = World;
-		uboRoom.nMat = glm::inverse(glm::transpose(World));
-		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
-
-		World = glm::mat4(1);
-		uboDecoration.amb = 1.0f; uboDecoration.gamma = 180.0f; uboDecoration.sColor = glm::vec3(1.0f);
-		uboDecoration.mvpMat = Prj * View * World;
-		uboDecoration.mMat = World;
-		uboDecoration.nMat = glm::inverse(glm::transpose(World));
-		DSDecoration.map(currentImage, &uboDecoration, sizeof(uboDecoration), 0);
-
-		World = glm::mat4(1);
-		uboCeiling.amb = 1.0f; uboCeiling.gamma = 180.0f; uboCeiling.sColor = glm::vec3(1.0f);
-		uboCeiling.mvpMat = Prj * View * World;
-		uboCeiling.mMat = World;
-		uboCeiling.nMat = glm::inverse(glm::transpose(World));
-		DSCeiling.map(currentImage, &uboCeiling, sizeof(uboCeiling), 0);
-
-		World = glm::mat4(1);
-		uboFloor.amb = 1.0f; uboFloor.gamma = 180.0f; uboFloor.sColor = glm::vec3(1.0f);
-		uboFloor.mvpMat = Prj * View * World;
-		uboFloor.mMat = World;
-		uboFloor.nMat = glm::inverse(glm::transpose(World));
-		DSFloor.map(currentImage, &uboFloor, sizeof(uboFloor), 0);
+			World = //rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
+				translate(glm::mat4(1.0), glm::vec3(10.6f, 0.0f, -10.5f)) *
+				glm::scale(glm::mat4(1), glm::vec3(1.7f, 0.9f, 1.0f));
+			uboDoor.amb = 1.0f; uboDoor.gamma = 180.0f; uboDoor.sColor = glm::vec3(1.0f);
+			uboDoor.mvpMat = Prj * View * World;
+			uboDoor.mMat = World;
+			uboDoor.nMat = glm::inverse(glm::transpose(World));
+			DSDoor.map(currentImage, &uboDoor, sizeof(uboDoor), 0);
 
 
-		World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.97f, -4.0f)) * 
-			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
-		uboCeilingLamp1.amb = 1.0f; uboCeilingLamp1.gamma = 180.0f; uboCeilingLamp1.sColor = glm::vec3(1.0f);
-		uboCeilingLamp1.mvpMat = Prj * View * World;
-		uboCeilingLamp1.mMat = World;
-		uboCeilingLamp1.nMat = glm::inverse(glm::transpose(World));
-		DSCeilingLamp1.map(currentImage, &uboCeilingLamp1, sizeof(uboCeilingLamp1), 0);
+			World = glm::mat4(1);
+			uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
+			uboRoom.mvpMat = Prj * View * World;
+			uboRoom.mMat = World;
+			uboRoom.nMat = glm::inverse(glm::transpose(World));
+			DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
 
-		World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.97f, -4.0f)) *
-			glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
-		uboCeilingLamp2.amb = 1.0f; uboCeilingLamp2.gamma = 180.0f; uboCeilingLamp2.sColor = glm::vec3(1.0f);
-		uboCeilingLamp2.mvpMat = Prj * View * World;
-		uboCeilingLamp2.mMat = World;
-		uboCeilingLamp2.nMat = glm::inverse(glm::transpose(World));
-		DSCeilingLamp2.map(currentImage, &uboCeilingLamp2, sizeof(uboCeilingLamp2), 0);
+			World = glm::mat4(1);
+			uboDecoration.amb = 1.0f; uboDecoration.gamma = 180.0f; uboDecoration.sColor = glm::vec3(1.0f);
+			uboDecoration.mvpMat = Prj * View * World;
+			uboDecoration.mMat = World;
+			uboDecoration.nMat = glm::inverse(glm::transpose(World));
+			DSDecoration.map(currentImage, &uboDecoration, sizeof(uboDecoration), 0);
 
-		World = translate(glm::mat4(1.0), glm::vec3(10.0f, 1.6f, 1.0f)) *
-			glm::scale(glm::mat4(1), glm::vec3(2.0f, 0.8f, 2.0f));
-		uboPoolLamp.amb = 1.0f; uboPoolLamp.gamma = 180.0f; uboPoolLamp.sColor = glm::vec3(1.0f);
-		uboPoolLamp.mvpMat = Prj * View * World;
-		uboPoolLamp.mMat = World;
-		uboPoolLamp.nMat = glm::inverse(glm::transpose(World));
-		DSPoolLamp.map(currentImage, &uboPoolLamp, sizeof(uboPoolLamp), 0);
+			World = glm::mat4(1);
+			uboCeiling.amb = 1.0f; uboCeiling.gamma = 180.0f; uboCeiling.sColor = glm::vec3(1.0f);
+			uboCeiling.mvpMat = Prj * View * World;
+			uboCeiling.mMat = World;
+			uboCeiling.nMat = glm::inverse(glm::transpose(World));
+			DSCeiling.map(currentImage, &uboCeiling, sizeof(uboCeiling), 0);
+
+			World = glm::mat4(1);
+			uboFloor.amb = 1.0f; uboFloor.gamma = 180.0f; uboFloor.sColor = glm::vec3(1.0f);
+			uboFloor.mvpMat = Prj * View * World;
+			uboFloor.mMat = World;
+			uboFloor.nMat = glm::inverse(glm::transpose(World));
+			DSFloor.map(currentImage, &uboFloor, sizeof(uboFloor), 0);
 
 
+			World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.97f, -4.0f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
+			uboCeilingLamp1.amb = 1.0f; uboCeilingLamp1.gamma = 180.0f; uboCeilingLamp1.sColor = glm::vec3(1.0f);
+			uboCeilingLamp1.mvpMat = Prj * View * World;
+			uboCeilingLamp1.mMat = World;
+			uboCeilingLamp1.nMat = glm::inverse(glm::transpose(World));
+			DSCeilingLamp1.map(currentImage, &uboCeilingLamp1, sizeof(uboCeilingLamp1), 0);
+
+			World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.97f, -4.0f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
+			uboCeilingLamp2.amb = 1.0f; uboCeilingLamp2.gamma = 180.0f; uboCeilingLamp2.sColor = glm::vec3(1.0f);
+			uboCeilingLamp2.mvpMat = Prj * View * World;
+			uboCeilingLamp2.mMat = World;
+			uboCeilingLamp2.nMat = glm::inverse(glm::transpose(World));
+			DSCeilingLamp2.map(currentImage, &uboCeilingLamp2, sizeof(uboCeilingLamp2), 0);
+
+			World = translate(glm::mat4(1.0), glm::vec3(10.0f, 1.6f, 1.0f)) *
+				glm::scale(glm::mat4(1), glm::vec3(2.0f, 0.8f, 2.0f));
+			uboPoolLamp.amb = 1.0f; uboPoolLamp.gamma = 180.0f; uboPoolLamp.sColor = glm::vec3(1.0f);
+			uboPoolLamp.mvpMat = Prj * View * World;
+			uboPoolLamp.mMat = World;
+			uboPoolLamp.nMat = glm::inverse(glm::transpose(World));
+			DSPoolLamp.map(currentImage, &uboPoolLamp, sizeof(uboPoolLamp), 0);
+
+			uboPopup.visible = (rangeVideogame) ? 1.0f : 0.0f;
+			DSPopup.map(currentImage, &uboPopup, sizeof(uboPopup), 0);
+			break;
+
+		case 1:
+			
+			break;
+		}
+		
 	}
 };
 
