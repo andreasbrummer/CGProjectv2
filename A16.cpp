@@ -22,11 +22,15 @@ struct MeshUniformBlock {
 };
 
 struct UniformBlockSimple {
-	alignas(16) glm::mat4 mvpMat;
+	alignas(16) glm::mat4 mMat;
 };
 
 struct OverlayUniformBlock {
 	alignas(4) float visible;
+};
+
+struct PongUniformBlock {
+	alignas(8) glm::vec2 pPos;
 };
 
 struct GlobalUniformBlock {
@@ -85,6 +89,7 @@ protected:
 	// Pipelines [Shader couples]
 	Pipeline PMesh, POverlay, PSimple, PSkyBoxP;
     Pipeline PRoom;
+	Pipeline PPong;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
@@ -94,18 +99,22 @@ protected:
 
 	Model<VertexOverlay> MPopup;
 
+	Model<VertexOverlay> MPong;
+
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner;
 
 	DescriptorSet DSPopup;
+	DescriptorSet DSPong;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
             TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,TBanner;
 
 	Texture TPopup;
+	Texture TPong;
 
 
 	// C++ storage for uniform variables
@@ -114,7 +123,7 @@ protected:
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
                      uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner;
 
-	OverlayUniformBlock uboPopup;
+	OverlayUniformBlock uboPopup, uboPong;
 
 	GlobalUniformBlock gubo;
 
@@ -192,7 +201,7 @@ protected:
 		DSLSimple.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
+		});
 
 		// Vertex descriptors
         // this array contains the bindings
@@ -230,6 +239,7 @@ protected:
 				{0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
 					   sizeof(glm::vec2), UV}
 			});
+
 		VOverlay.init(this, {
 				  {0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
@@ -238,6 +248,7 @@ protected:
 			  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),
 					 sizeof(glm::vec2), UV}
 			});
+
 		VSimple.init(this, {
 				  {0, sizeof(VertexSimple), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
@@ -262,6 +273,8 @@ protected:
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
+
+		PPong.init(this, &VOverlay, "shaders/PongVert.spv", "shaders/PongFrag.spv", {&DSLOverlay});
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -295,6 +308,12 @@ protected:
 						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}} };
 		MPopup.indices = { 0, 1, 2,    1, 2, 3 };
 		MPopup.initMesh(this, &VOverlay);
+
+
+		MPong.vertices = { {{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
+						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}} };
+		MPong.indices = { 0, 1, 2,    1, 2, 3 };
+		MPong.initMesh(this, &VSimple);
 
 		// Create the textures
 		// The second parameter is the file name
@@ -335,6 +354,7 @@ protected:
 		PSimple.create();
 		PRoom.create();
         PSkyBoxP.create();
+		PPong.create();
 
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
@@ -433,6 +453,11 @@ protected:
 			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TPopup}
 		});
+
+		DSPong.init(this, &DSLOverlay, {
+			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TCeilingLamp1}
+		});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -443,6 +468,7 @@ protected:
 		POverlay.cleanup();
 		PSimple.cleanup();
         PSkyBoxP.cleanup();
+		PPong.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
         DSCabinet2.cleanup();
@@ -465,6 +491,7 @@ protected:
 
 		DSPopup.cleanup();
 		DSBanner.cleanup();
+		DSPong.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -514,6 +541,7 @@ protected:
 		MBanner.cleanup();
 
 		MPopup.cleanup();
+		MPong.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -528,6 +556,7 @@ protected:
 		PSimple.destroy();
 		PRoom.destroy();
         PSkyBoxP.destroy();
+		PPong.destroy();
 	}
 
 	// Here it is the creation of the command buffer:
@@ -687,73 +716,80 @@ protected:
 		static bool wasFire = false;
 		bool handleFire = (wasFire && (!fire));
 		wasFire = fire;
-
-		// Game Logic implementation
+		switch (currScene) {
+			case 0:
+				// Game Logic implementation
 		// Current Player Position - static variable make sure its value remain unchanged in subsequent calls to the procedure
 
 		// World
-		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
-			MOVE_SPEED = 8.0f;
+				if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
+					MOVE_SPEED = 8.0f;
+				}
+				else {
+					MOVE_SPEED = 2.0f;
+				}
+
+				/*// Jumping
+				if (glfwGetKey(window, GLFW_KEY_SPACE) && !isJumping) {
+					// Start the jump
+					isJumping = true;
+					jumpVelocity = sqrt(2.0f * gravity * jumpHeight);  // Calculate the initial velocity based on the desired jump height
+					jumpTime = 0.0f;
+				}*/
+
+				/*
+				// Check if the player is currently jumping
+				if (isJumping) {
+					// Update the jump time
+					jumpTime += deltaT;
+
+					// Apply gravity to the jump velocity
+					jumpVelocity -= gravity * deltaT;
+
+					// Calculate the new position based on the jump velocity
+					glm::vec3 jumpOffset = glm::vec3(0, jumpVelocity * deltaT, 0);
+					Pos += jumpOffset;
+
+					// Check if the maximum jump time is reached or if the player has landed
+					if (jumpTime >= maxJumpTime || Pos.y <= 0.0f) {
+						// End the jump
+						isJumping = false;
+						jumpVelocity = 0.0f;
+						jumpTime = 0.0f;
+
+						// Ensure the player is on the ground level
+						Pos.y = 0.0f;
+					}
+				}*/
+
+				// Rotation
+				alpha[currScene] = alpha[currScene] - ROT_SPEED * deltaT * r.y;
+				beta[currScene] = beta[currScene] - ROT_SPEED * deltaT * r.x;
+				beta[currScene] = beta[currScene] < glm::radians(-90.0f) ? glm::radians(-90.0f) :
+					(beta[currScene] > glm::radians(90.0f) ? glm::radians(90.0f) : beta[currScene]);
+
+				// Position
+				glm::vec3 ux = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
+				glm::vec3 uz = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
+				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.x * ux * deltaT;
+				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
+				//Pos[currScene].y = 0.0f;
+				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.z * uz * deltaT;
+				cameraPos = Pos[currScene] + glm::vec3(0, camHeight, 0);
+
+				Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
+				Prj[1][1] *= -1;
+
+				View =  //glm::rotate(glm::mat4(1.0),-rho,glm::vec3(0,0,1)) *
+					glm::rotate(glm::mat4(1.0), -beta[currScene], glm::vec3(1, 0, 0)) *
+					glm::rotate(glm::mat4(1.0), -alpha[currScene], glm::vec3(0, 1, 0)) *
+					glm::translate(glm::mat4(1.0), -cameraPos);
+				break;
+			case 1:
+
+				break;
 		}
-		else {
-			MOVE_SPEED = 2.0f;
-		}
-
-		/*// Jumping
-		if (glfwGetKey(window, GLFW_KEY_SPACE) && !isJumping) {
-			// Start the jump
-			isJumping = true;
-			jumpVelocity = sqrt(2.0f * gravity * jumpHeight);  // Calculate the initial velocity based on the desired jump height
-			jumpTime = 0.0f;
-		}*/
-
-		/*
-		// Check if the player is currently jumping
-		if (isJumping) {
-			// Update the jump time
-			jumpTime += deltaT;
-
-			// Apply gravity to the jump velocity
-			jumpVelocity -= gravity * deltaT;
-
-			// Calculate the new position based on the jump velocity
-			glm::vec3 jumpOffset = glm::vec3(0, jumpVelocity * deltaT, 0);
-			Pos += jumpOffset;
-
-			// Check if the maximum jump time is reached or if the player has landed
-			if (jumpTime >= maxJumpTime || Pos.y <= 0.0f) {
-				// End the jump
-				isJumping = false;
-				jumpVelocity = 0.0f;
-				jumpTime = 0.0f;
-
-				// Ensure the player is on the ground level
-				Pos.y = 0.0f;
-			}
-		}*/
-
-		// Rotation
-		alpha[currScene] = alpha[currScene] - ROT_SPEED * deltaT * r.y;
-		beta[currScene] = beta[currScene] - ROT_SPEED * deltaT * r.x;
-		beta[currScene] = beta[currScene] < glm::radians(-90.0f) ? glm::radians(-90.0f) :
-			(beta[currScene] > glm::radians(90.0f) ? glm::radians(90.0f) : beta[currScene]);
-
-		// Position
-		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
-		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
-		Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.x * ux * deltaT;
-		Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
-		//Pos[currScene].y = 0.0f;
-		Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.z * uz * deltaT;
-		cameraPos = Pos[currScene] + glm::vec3(0, camHeight, 0);
-
-		Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
-		Prj[1][1] *= -1;
-
-		View =  //glm::rotate(glm::mat4(1.0),-rho,glm::vec3(0,0,1)) *
-			glm::rotate(glm::mat4(1.0), -beta[currScene], glm::vec3(1, 0, 0)) *
-			glm::rotate(glm::mat4(1.0), -alpha[currScene], glm::vec3(0, 1, 0)) *
-			glm::translate(glm::mat4(1.0), -cameraPos);
+		
 
 	}
 	// Here is where you update the uniforms.
