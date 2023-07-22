@@ -404,7 +404,7 @@ protected:
 		TCabinet.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
 		TRoom.init(this, "textures/RoomTextures/ArcadeWalls3.jpg");
 		TDecoration.init(this, "textures/RoomTextures/textureDecoration.jpg");
-		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
+		TCeiling.init(this, "textures/RoomTextures/CeilingV4.png");
 		TFloor.init(this, "textures/RoomTextures/WoodFloor.jpg");
 		TPoolLamp.init(this, "textures/LampTextures/TexturesCity.png");
 		TPoolLampEmi.init(this, "textures/LampTextures/TexturesCityEmission.png");
