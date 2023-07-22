@@ -84,13 +84,13 @@ protected:
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple;
+	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple,DSLAdvanced;
 	// Vertex formats
 	VertexDescriptor VMesh,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
 	Pipeline PMesh, POverlay, PSimple, PSkyBoxP, PRoom;
-	Pipeline PPong;
+	Pipeline PPong, PEmi;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
@@ -111,7 +111,7 @@ protected:
 	DescriptorSet DSPongR, DSPongL, DSPongBall, DSPongNet;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
-            TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
+            TWhite, TPoolLamp, TPoolLampEmi, TForniture, TskyBox,
             TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,
 			TBanner,TWorldFloor,TPopup;
 
@@ -169,7 +169,7 @@ protected:
 		// window size, titile and initial background
 		windowWidth = 1024;
 		windowHeight = 768;
-		windowTitle = "A16";
+		windowTitle = "SpaceArcade";
 		windowResizable = GLFW_TRUE;
 		initialBackgroundColor = { 0.0f, 0.005f, 0.01f, 1.0f };
 
@@ -214,6 +214,14 @@ protected:
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
+
+		DSLAdvanced.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT
+	}
+			});
+
 
 		// Vertex descriptors
 		// this array contains the bindings
@@ -290,6 +298,8 @@ protected:
 		PPong.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
+		PEmi.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/EmiFragTest.spv", { &DSLGubo,&DSLAdvanced });
+
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
 		// Create models
@@ -306,9 +316,9 @@ protected:
 		MDecoration.init(this, &VMesh, "Models/Decoration3.obj", OBJ);
 		MCeiling.init(this, &VMesh, "Models/CeilingV3.obj", OBJ);
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
-		MCeilingLamp1.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
-		MCeilingLamp2.init(this, &VMesh, "Models/LampReverseN.obj", OBJ);
-		MPoolLamp.init(this, &VMesh, "Models/SpotLampV2.obj", OBJ);
+		MCeilingLamp1.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
+		MCeilingLamp2.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
+		MPoolLamp.init(this, &VMesh,"Models/PoolLampProva.obj", OBJ);
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MSkyBoxProva.init(this, &VMesh, "Models/SkyBoxCube.obj", OBJ);
@@ -366,7 +376,7 @@ protected:
 		MPongBall.initMesh(this, &VOverlay);
 
 		int netNumber = 15;
-		//length of a rectangle of a net calculate as the total lenght of the screen divided by the number of rectangles * 2 (uno sì e uno no)
+		//length of a rectangle of a net calculate as the total lenght of the screen divided by the number of rectangles * 2 (uno sï¿½ e uno no)
 		float netRectLenght = 2.0f / (netNumber * 2.0f);
 		float netRectWidht = 0.02f;
 
@@ -395,9 +405,8 @@ protected:
 		TDecoration.init(this, "textures/RoomTextures/textureDecoration.jpg");
 		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
 		TFloor.init(this, "textures/RoomTextures/WoodFloor.jpg");
-		TCeilingLamp1.init(this, "textures/white.png");
-		TCeilingLamp2.init(this, "textures/white.png");
-		TPoolLamp.init(this, "textures/lamp.jpg");
+		TPoolLamp.init(this, "textures/LampTextures/TexturesCity.png");
+		TPoolLampEmi.init(this, "textures/LampTextures/TexturesCityEmission.png");
 		TForniture.init(this, "textures/Textures_Forniture.png");
         TAsteroids.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
         TDanceDance.init(this,"textures/DanceDanceTextures/lambert3_baseColor.png");
@@ -408,6 +417,7 @@ protected:
         TDoor.init(this,"textures/door.jpeg");
 		TBanner.init(this, "textures/insegna.jpg");
 		TWorldFloor.init(this, "textures/lightGreen.jpg");
+		TWhite.init(this, "textures/white.png");
 
 		TPopup.init(this, "textures/PressSpace.png");
 
@@ -429,6 +439,7 @@ protected:
 		PRoom.create();
         PSkyBoxP.create();
 		PPong.create();
+		PEmi.create();
 
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
@@ -494,19 +505,22 @@ protected:
 			{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 		});
 
-		DSCeilingLamp1.init(this, &DSLMesh, {
+		DSPoolLamp.init(this, &DSLAdvanced, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeilingLamp1}
-		});
+			{1, TEXTURE, 0, &TPoolLamp},
+			{2,TEXTURE,0,&TPoolLampEmi}
+			});
 
-		DSCeilingLamp2.init(this, &DSLMesh, {
+		DSCeilingLamp1.init(this, &DSLAdvanced, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeilingLamp2}
-		});
+			{1, TEXTURE, 0, &TPoolLamp},
+			{2,TEXTURE,0,&TPoolLampEmi}
+			});
 
-		DSPoolLamp.init(this, &DSLMesh, {
+		DSCeilingLamp2.init(this, &DSLAdvanced, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TPoolLamp}
+			{1, TEXTURE, 0, &TPoolLamp},
+			{2,TEXTURE,0,&TPoolLampEmi}
 			});
 
 		DSPoolTable.init(this, &DSLSimple, {
@@ -536,22 +550,22 @@ protected:
 
 		DSPongR.init(this, &DSLOverlay, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeilingLamp1}
+			{1, TEXTURE, 0, &TWhite}
 		});
 
 		DSPongL.init(this, &DSLOverlay, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeilingLamp1}
+			{1, TEXTURE, 0, &TWhite}
 		});
 
 		DSPongBall.init(this, &DSLOverlay, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeilingLamp1}
+			{1, TEXTURE, 0, &TWhite}
 		});
 
 		DSPongNet.init(this, &DSLOverlay, {
 			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeilingLamp1}
+			{1, TEXTURE, 0, &TWhite}
 		});
 	}
 
@@ -564,6 +578,7 @@ protected:
 		PSimple.cleanup();
         PSkyBoxP.cleanup();
 		PPong.cleanup();
+		PEmi.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
         DSCabinet2.cleanup();
@@ -604,9 +619,9 @@ protected:
 		TDecoration.cleanup();
 		TCeiling.cleanup();
 		TFloor.cleanup();
-		TCeilingLamp1.cleanup();
-		TCeilingLamp2.cleanup();
+		TWhite.cleanup();
 		TPoolLamp.cleanup();
+		TPoolLampEmi.cleanup();
 		TForniture.cleanup();
         TAsteroids.cleanup();
 		TskyBox.cleanup();
@@ -652,6 +667,7 @@ protected:
 		DSLOverlay.cleanup();
 		DSLGubo.cleanup();
 		DSLSimple.cleanup();
+		DSLAdvanced.cleanup();
 
 
 		// Destroies the pipelines
@@ -661,6 +677,7 @@ protected:
 		PRoom.destroy();
         PSkyBoxP.destroy();
 		PPong.destroy();
+		PEmi.destroy();
 	}
 
 	// Here it is the creation of the command buffer:
@@ -750,21 +767,6 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
 
-			MCeilingLamp1.bind(commandBuffer);
-			DSCeilingLamp1.bind(commandBuffer, PMesh, 1, currentImage);
-			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
-
-			MCeilingLamp2.bind(commandBuffer);
-			DSCeilingLamp2.bind(commandBuffer, PMesh, 1, currentImage);
-			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
-
-			MPoolLamp.bind(commandBuffer);
-			DSPoolLamp.bind(commandBuffer, PMesh, 1, currentImage);
-			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
-
 			MBanner.bind(commandBuffer);
 			DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
@@ -796,6 +798,24 @@ protected:
 			DSPopup.bind(commandBuffer, POverlay, 0, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPopup.indices.size()), 1, 0, 0, 0);
+
+			PEmi.bind(commandBuffer);
+			DSGubo.bind(commandBuffer, PEmi, 0, currentImage);
+			MPoolLamp.bind(commandBuffer);
+			DSPoolLamp.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
+
+			MCeilingLamp1.bind(commandBuffer);
+			DSCeilingLamp1.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
+
+			MCeilingLamp2.bind(commandBuffer);
+			DSCeilingLamp2.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
+
 			break;
 		case 1:
 			PPong.bind(commandBuffer);
@@ -1211,8 +1231,8 @@ protected:
 			uboCeilingLamp2.nMat = glm::inverse(glm::transpose(World));
 			DSCeilingLamp2.map(currentImage, &uboCeilingLamp2, sizeof(uboCeilingLamp2), 0);
 
-			World = translate(glm::mat4(1.0), glm::vec3(10.0f, 1.6f, 1.0f)) *
-				glm::scale(glm::mat4(1), glm::vec3(2.0f, 0.8f, 2.0f));
+			World = translate(glm::mat4(1.0), glm::vec3(10.0f, 3.0f, 1.0f)) *
+				glm::scale(glm::mat4(1), glm::vec3(2.0f, 2.0f, 2.0f));
 			uboPoolLamp.amb = 1.0f; uboPoolLamp.gamma = 180.0f; uboPoolLamp.sColor = glm::vec3(1.0f);
 			uboPoolLamp.mvpMat = Prj * View * World;
 			uboPoolLamp.mMat = World;
