@@ -89,8 +89,7 @@ protected:
 	VertexDescriptor VMesh,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh, POverlay, PSimple, PSkyBoxP, PRoom;
-	Pipeline PPong, PEmi;
+	Pipeline PMesh, POverlay, PSimple, PSkyBoxP, PRoom, PPong, PEmi, PFloor;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
@@ -298,7 +297,9 @@ protected:
 		PPong.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PEmi.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/EmiFragTest.spv", { &DSLGubo,&DSLAdvanced });
+		PEmi.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/EmiFragTest.spv", { &DSLGubo, &DSLAdvanced});
+
+		PFloor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/FloorFrag.spv", { &DSLGubo, &DSLMesh });
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -401,7 +402,7 @@ protected:
 		// Create the textures
 		// The second parameter is the file name
 		TCabinet.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
-		TRoom.init(this, "textures/RoomTextures/ArcadeWalls2.jpg");
+		TRoom.init(this, "textures/RoomTextures/ArcadeWalls3.jpg");
 		TDecoration.init(this, "textures/RoomTextures/textureDecoration.jpg");
 		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
 		TFloor.init(this, "textures/RoomTextures/WoodFloor.jpg");
@@ -415,7 +416,7 @@ protected:
         TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/door.jpeg");
-		TBanner.init(this, "textures/insegna.jpg");
+		TBanner.init(this, "textures/DarkGrey.png");
 		TWorldFloor.init(this, "textures/lightGreen.jpg");
 		TWhite.init(this, "textures/white.png");
 
@@ -440,6 +441,7 @@ protected:
         PSkyBoxP.create();
 		PPong.create();
 		PEmi.create();
+		PFloor.create();
 
 		// Here you define the data set
 		DSCabinet.init(this, &DSLSimple, {
@@ -579,6 +581,7 @@ protected:
         PSkyBoxP.cleanup();
 		PPong.cleanup();
 		PEmi.cleanup();
+		PFloor.cleanup();
 		// Cleanup datasets
 		DSCabinet.cleanup();
         DSCabinet2.cleanup();
@@ -678,6 +681,7 @@ protected:
         PSkyBoxP.destroy();
 		PPong.destroy();
 		PEmi.destroy();
+		PFloor.destroy();
 	}
 
 	// Here it is the creation of the command buffer:
@@ -762,11 +766,6 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeiling.indices.size()), 1, 0, 0, 0);
 
-			MFloor.bind(commandBuffer);
-			DSFloor.bind(commandBuffer, PMesh, 1, currentImage);
-			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
-
 			MBanner.bind(commandBuffer);
 			DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
@@ -815,6 +814,13 @@ protected:
 			DSCeilingLamp2.bind(commandBuffer, PEmi, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
+
+			PFloor.bind(commandBuffer);
+
+			MFloor.bind(commandBuffer);
+			DSFloor.bind(commandBuffer, PFloor, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
 
 			break;
 		case 1:
@@ -1153,12 +1159,6 @@ protected:
 			uboDanceDace.nMat = glm::inverse(glm::transpose(World));
 			DSDanceDance.map(currentImage, &uboDanceDace, sizeof(uboDanceDace), 0);
 
-			World = glm::rotate(glm::mat4(1.0), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
-				glm::translate(glm::mat4(1.0), glm::vec3(5.0, 0.0f, 0.6f)) *
-				glm::scale(glm::mat4(1), glm::vec3(0.0065f));
-
-
-
 			World = translate(glm::mat4(1.0), glm::vec3(14.0f, 0.0f, -9.5f)) *
 				glm::scale(glm::mat4(1), glm::vec3(12.0f));
 			uboSnackMachine.amb = 1.0f; uboSnackMachine.gamma = 180.0f; uboSnackMachine.sColor = glm::vec3(1.0f);
@@ -1184,7 +1184,6 @@ protected:
 			uboDoor.mMat = World;
 			uboDoor.nMat = glm::inverse(glm::transpose(World));
 			DSDoor.map(currentImage, &uboDoor, sizeof(uboDoor), 0);
-
 
 			World = glm::mat4(1);
 			uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
@@ -1214,8 +1213,7 @@ protected:
 			uboFloor.nMat = glm::inverse(glm::transpose(World));
 			DSFloor.map(currentImage, &uboFloor, sizeof(uboFloor), 0);
 
-
-			World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.97f, -4.0f)) *
+			World = translate(glm::mat4(1.0), glm::vec3(3.0f, 3.9f, -4.0f)) *
 				glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
 			uboCeilingLamp1.amb = 1.0f; uboCeilingLamp1.gamma = 180.0f; uboCeilingLamp1.sColor = glm::vec3(1.0f);
 			uboCeilingLamp1.mvpMat = Prj * View * World;
@@ -1223,7 +1221,7 @@ protected:
 			uboCeilingLamp1.nMat = glm::inverse(glm::transpose(World));
 			DSCeilingLamp1.map(currentImage, &uboCeilingLamp1, sizeof(uboCeilingLamp1), 0);
 
-			World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.97f, -4.0f)) *
+			World = translate(glm::mat4(1.0), glm::vec3(11.0f, 3.9f, -4.0f)) *
 				glm::scale(glm::mat4(1), glm::vec3(0.15f, 0.15f, 0.15f));
 			uboCeilingLamp2.amb = 1.0f; uboCeilingLamp2.gamma = 180.0f; uboCeilingLamp2.sColor = glm::vec3(1.0f);
 			uboCeilingLamp2.mvpMat = Prj * View * World;
@@ -1243,8 +1241,8 @@ protected:
 			DSPopup.map(currentImage, &uboPopup, sizeof(uboPopup), 0);
 			
 			World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
-			translate(glm::mat4(1.0), glm::vec3(-4.0f, 2.0f, 10.6f)) *
-			glm::scale(glm::mat4(1), glm::vec3(2.0f, 2.0f, 2.0f));
+			translate(glm::mat4(1.0), glm::vec3(-2.3f, 2.8f, 10.6f)) *
+			glm::scale(glm::mat4(1), glm::vec3(1.2f, 1.0f, 0.25f));
 			uboBanner.amb = 1.0f; uboBanner.gamma = 180.0f; uboBanner.sColor = glm::vec3(1.0f);
 			uboBanner.mvpMat = Prj * View * World;
 			uboBanner.mMat = World;
