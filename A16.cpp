@@ -314,7 +314,7 @@ protected:
 		MNudge.init(this, &VMesh, "Models/Nudge.obj", OBJ);
 		MRoom.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
 		MDecoration.init(this, &VMesh, "Models/Decoration.obj", OBJ);
-		MCeiling.init(this, &VMesh, "Models/CeilingV3.obj", OBJ);
+		MCeiling.init(this, &VMesh, "Models/CeilingV4.obj", OBJ);
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
 		MCeilingLamp1.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
 		MCeilingLamp2.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
