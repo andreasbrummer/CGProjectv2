@@ -167,8 +167,8 @@ protected:
 	// Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, titile and initial background
-		windowWidth = 1920;
-		windowHeight = 1080;
+		windowWidth = 1024;
+		windowHeight = 768;
 		windowTitle = "SpaceArcade";
 		windowResizable = GLFW_TRUE;
 		initialBackgroundColor = { 0.0f, 0.005f, 0.01f, 1.0f };
@@ -313,8 +313,8 @@ protected:
 		MBattleZone.init(this, &VMesh, "Models/BattleZone.obj", OBJ);
 		MNudge.init(this, &VMesh, "Models/Nudge.obj", OBJ);
 		MRoom.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
-		MDecoration.init(this, &VMesh, "Models/Decoration.obj", OBJ);
 		MCeiling.init(this, &VMesh, "Models/CeilingV4.obj", OBJ);
+		MDecoration.init(this, &VMesh, "Models/Decoration3.obj", OBJ);
 		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
 		MCeilingLamp1.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
 		MCeilingLamp2.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
@@ -376,7 +376,7 @@ protected:
 		MPongBall.initMesh(this, &VOverlay);
 
 		int netNumber = 15;
-		//length of a rectangle of a net calculate as the total lenght of the screen divided by the number of rectangles * 2 (uno sì e uno no)
+		//length of a rectangle of a net calculate as the total lenght of the screen divided by the number of rectangles * 2 (uno sï¿½ e uno no)
 		float netRectLenght = 2.0f / (netNumber * 2.0f);
 		float netRectWidht = 0.02f;
 
@@ -402,7 +402,7 @@ protected:
 		// The second parameter is the file name
 		TCabinet.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
 		TRoom.init(this, "textures/RoomTextures/ArcadeWalls2.jpg");
-		TDecoration.init(this, "textures/RoomTextures/Decoration.jpg");
+		TDecoration.init(this, "textures/RoomTextures/textureDecoration.jpg");
 		TCeiling.init(this, "textures/RoomTextures/CeilingV3.png");
 		TFloor.init(this, "textures/RoomTextures/WoodFloor.jpg");
 		TPoolLamp.init(this, "textures/LampTextures/TexturesCity.png");
