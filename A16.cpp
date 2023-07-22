@@ -1,6 +1,8 @@
 // This has been adapted from the Vulkan tutorial
 
 #include "Starter.hpp"
+#include <cstdlib>
+#include <ctime>
 
 // The uniform buffer objects data structures
 // Remember to use the correct alignas(...) value
@@ -72,7 +74,7 @@ struct VertexSimple {
 
 class A16;
 void GameLogic(A16* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World,glm::mat3 &CamDir);
-
+void ballBounce();
 
 // MAIN ! 
 class A16 : public BaseProject {
@@ -98,7 +100,7 @@ protected:
 
 	Model<VertexOverlay> MPopup;
 
-	Model<VertexOverlay> MPongR, MPongL, MPongBall;
+	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
@@ -106,15 +108,12 @@ protected:
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,DSWorldFloor;
 
 	DescriptorSet DSPopup;
-	DescriptorSet DSPongR, DSPongL, DSPongBall;
+	DescriptorSet DSPongR, DSPongL, DSPongBall, DSPongNet;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TCeilingLamp1, TCeilingLamp2, TPoolLamp, TForniture, TskyBox,
-            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,TBanner,TWorldFloor;
-
-	Texture TPopup;
-	Texture TPong;
-
+            TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,
+			TBanner,TWorldFloor,TPopup;
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
@@ -122,13 +121,13 @@ protected:
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
                      uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner,uboWorldFloor;
 
-	OverlayUniformBlock uboPopup;
+	OverlayUniformBlock uboPopup,uboPongNet;
 	PongUniformBlock uboPong;
 
 	GlobalUniformBlock gubo;
 
 	// Other application parameters
-	int currScene = 1;
+	int currScene = 0;
 	bool rangeVideogame;
 	glm::mat4 View = glm::mat4(1);
 	glm::mat4 Prj = glm::mat4(1);
@@ -366,6 +365,29 @@ protected:
 
 		MPongBall.initMesh(this, &VOverlay);
 
+		int netNumber = 15;
+		//length of a rectangle of a net calculate as the total lenght of the screen divided by the number of rectangles * 2 (uno sì e uno no)
+		float netRectLenght = 2.0f / (netNumber * 2.0f);
+		float netRectWidht = 0.02f;
+
+		for (int i = 0; i < netNumber; i++) {
+			MPongNet.vertices.push_back({ {-netRectWidht/2, -1 + 2 * i * netRectLenght},{0.0f,0.0f} });
+			MPongNet.vertices.push_back({ {+netRectWidht/2, -1 + 2 * i * netRectLenght},{0.0f,1.0f} });
+			MPongNet.vertices.push_back({ {-netRectWidht/2, -1 + 2 * i * netRectLenght + netRectLenght},{1.0f,0.0f} });
+			MPongNet.vertices.push_back({ {+netRectWidht/2, -1 + 2 * i * netRectLenght + netRectLenght},{1.0f,1.0f} });
+
+			MPongNet.indices.push_back(4 * i);
+			MPongNet.indices.push_back(4 * i + 1);
+			MPongNet.indices.push_back(4 * i + 2);
+
+			MPongNet.indices.push_back(4 * i + 1);
+			MPongNet.indices.push_back(4 * i + 2);
+			MPongNet.indices.push_back(4 * i + 3);
+		}
+
+		MPongNet.initMesh(this, &VOverlay);
+
+
 		// Create the textures
 		// The second parameter is the file name
 		TCabinet.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
@@ -525,7 +547,12 @@ protected:
 		DSPongBall.init(this, &DSLOverlay, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeilingLamp1}
-			});
+		});
+
+		DSPongNet.init(this, &DSLOverlay, {
+			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TCeilingLamp1}
+		});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -563,6 +590,7 @@ protected:
 		DSPongR.cleanup();
 		DSPongL.cleanup();
 		DSPongBall.cleanup();
+		DSPongNet.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -617,6 +645,7 @@ protected:
 		MPongR.cleanup();
 		MPongL.cleanup();
 		MPongBall.cleanup();
+		MPongNet.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -770,6 +799,7 @@ protected:
 			break;
 		case 1:
 			PPong.bind(commandBuffer);
+			
 			MPongR.bind(commandBuffer);
 
 			DSPongR.bind(commandBuffer, PPong, 0, currentImage);
@@ -788,10 +818,56 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPongBall.indices.size()), 1, 0, 0, 0);
 
+			POverlay.bind(commandBuffer);
+			MPongNet.bind(commandBuffer);
+
+			DSPongNet.bind(commandBuffer, POverlay, 0, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MPongNet.indices.size()), 1, 0, 0, 0);
+
 			break;
 		}
 
     }
+
+	//function that change the velocity of the ball when it hits on of the 2 "racket"
+	void ballBounce() {
+		//flip ball velocity when it hits on of the 2 "racket"
+		pongVelBall.x *= -1.0f;
+		
+		//variation of ball velocity min and max
+		float min = 0.00001f;
+		float max = 0.00003f;
+		//limit to the ball velocity x and y
+		float velLimitX = 0.0003f; 
+		float velLimitY = 0.0002f;
+		
+		//calculate a random value between min and max to add to the ball velocity
+		std::srand(std::time(0));
+		double randomValue = min + static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / (max - min)));
+
+		
+		if (pongVelBall.x < velLimitX) {
+			if (pongVelBall.x > 0.0f) {
+				pongVelBall.x += randomValue;
+			}
+			else {
+				pongVelBall.x -= randomValue;
+			}
+		}
+		
+		std::srand(std::time(0));
+		randomValue = min + static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / (max - min)));
+
+		if (pongVelBall.y < velLimitY) {
+			if (pongVelBall.y > 0.0f) {
+				pongVelBall.y += randomValue;
+			}
+			else {
+				pongVelBall.y -= randomValue;
+			}
+		}
+	}
 
 	void GameLogic() {
 		// Parameters
@@ -888,14 +964,31 @@ protected:
 
 				pongPosBall += pongVelBall;
 
+				
+
 				if (pongPosBall.y + ballRadius <= -1.0f || pongPosBall.y + ballRadius >= 1.0f) {
 					pongVelBall.y *= -1.0f;
 				}
 				if (pongPosBall.x - ballRadius <= pongPosL.x + pongWidth/2) {
-					pongVelBall.x *= -1.0f;
+					if (pongPosBall.y + ballRadius >= pongPosL.y - pongLength/2 && pongPosBall.y - ballRadius <= pongPosL.y + pongLength/2) {
+						ballBounce();
+					}
+					else if (pongPosBall.x - ballRadius <= -1.0f) {
+						pongPosBall = glm::vec2(0.0f, 0.0f);
+						pongVelBall = glm::vec2(0.0001f, 0.0001f);
+					}
+					
 				}
-				if (pongPosBall.x + ballRadius >= pongPosR.x - pongWidth/2) {
-					pongVelBall.x *= -1.0f;
+				if (pongPosBall.x + ballRadius >= pongPosR.x - pongWidth / 2) {
+					if (pongPosBall.y + ballRadius >= pongPosR.y - pongLength / 2 && pongPosBall.y - ballRadius <= pongPosR.y + pongLength / 2) {
+						ballBounce();
+
+					}
+					else if (pongPosBall.x + ballRadius >= 1.0f) {
+						pongPosBall = glm::vec2(0.0f, 0.0f);
+						pongVelBall = glm::vec2(0.0001f, 0.0001f);
+					}
+
 				}
 
 				if (glfwGetKey(window, GLFW_KEY_W) && pongPosL.y > -1.0f + pongLength/2) {
@@ -929,6 +1022,11 @@ protected:
 				curDebounce = GLFW_KEY_SPACE;
 				currScene = (currScene + 1) % 2;
 				std::cout << "Scene : " << currScene << "\n";
+				pongPosBall = glm::vec2(0.0f, 0.0f);
+				pongVelBall = glm::vec2(0.0001f, 0.0001f);
+				pongPosR = glm::vec2(xURR - pongWidth / 2, 0.0f);
+				pongPosL = glm::vec2(xULL + pongWidth / 2, 0.0f);
+
 				RebuildPipeline();
 			}
 		}
@@ -1144,15 +1242,17 @@ protected:
 
 		case 1:
 
-			uboPong.pPos = pongPosR;
+			uboPong.pPos = glm::vec2(0.0, pongPosR.y);
 			DSPongR.map(currentImage, &uboPong, sizeof(uboPong), 0);
 
-			uboPong.pPos = pongPosL;
+			uboPong.pPos = glm::vec2(0.0, pongPosL.y);
 			DSPongL.map(currentImage, &uboPong, sizeof(uboPong), 0);
 
 			uboPong.pPos = pongPosBall;
 			DSPongBall.map(currentImage, &uboPong, sizeof(uboPong), 0);
 			
+			uboPongNet.visible = 1.0f;
+			DSPongNet.map(currentImage, &uboPongNet, sizeof(uboPongNet), 0);
 			break;
 		}
 		
