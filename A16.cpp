@@ -323,7 +323,7 @@ protected:
 		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MSkyBoxProva.init(this, &VMesh, "Models/SkyBoxCube.obj", OBJ);
-		MDoor.init(this, &VMesh, "Models/NewDoor.obj", OBJ);
+		MDoor.init(this, &VMesh, "Models/shutterDoor.obj", OBJ);
 		MBanner.init(this, &VMesh, "Models/insegna.obj", OBJ);
 		MWorldFloor.init(this, &VMesh, "Models/WorldFloor.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
@@ -415,7 +415,7 @@ protected:
         TNudge.init(this,"textures/Nudge/Material.002_albedo.jpg");
         TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
-        TDoor.init(this,"textures/door.jpeg");
+        TDoor.init(this,"textures/shutterTexture.png");
 		TBanner.init(this, "textures/DarkGrey.png");
 		TWorldFloor.init(this, "textures/lightGreen.jpg");
 		TWhite.init(this, "textures/white.png");
@@ -1176,9 +1176,8 @@ protected:
 			uboPoolTable.nMat = glm::inverse(glm::transpose(World));
 			DSPoolTable.map(currentImage, &uboPoolTable, sizeof(uboPoolTable), 0);
 
-			World = //rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0, 1, 0)) *
-				translate(glm::mat4(1.0), glm::vec3(10.6f, 0.0f, -10.5f)) *
-				glm::scale(glm::mat4(1), glm::vec3(1.7f, 0.9f, 1.0f));
+			World = glm::scale(glm::mat4(1), glm::vec3(0.97f, 1.0f, 1.0f)) *
+				translate(glm::mat4(1.0), glm::vec3(0.33f, 0.0f, 0.0f));
 			uboDoor.amb = 1.0f; uboDoor.gamma = 180.0f; uboDoor.sColor = glm::vec3(1.0f);
 			uboDoor.mvpMat = Prj * View * World;
 			uboDoor.mMat = World;
