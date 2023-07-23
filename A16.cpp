@@ -56,7 +56,7 @@ struct SkyboxUniformBufferObject {
 };
 
 // The vertices data structures
-struct VertexMesh {
+struct VertexOBJ {
 	glm::vec3 pos;
 	glm::vec3 norm;
 	glm::vec2 UV;
@@ -86,30 +86,47 @@ protected:
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
 	DescriptorSetLayout DSLGubo, DSLOBJ, DSLOverlay, DSLAdvanced;
 	// Vertex formats
-	VertexDescriptor VMesh,  VOverlay, VSimple;
+	VertexDescriptor VOBJ,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
 	Pipeline PMesh, POverlay, PSimple, PSkyBoxP, PRoom, PPong, PEmi, PFloor;
-
+    std::vector<Pipeline*> pipelines = {&PMesh, &POverlay, &PSimple, &PSkyBoxP, &PRoom, &PPong, &PEmi, &PFloor};
 
     // Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
+	Model<VertexOBJ> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
                       MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva,MBanner,MWorldFloor;
 
 
 	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet, MPopup;
 
+    std::vector<Model<VertexOBJ>*> objModels = {
+            &MCabinet1, &MCabinet2, &MAsteroids, &MRoom, &MDecoration, &MCeiling,
+            &MFloor, &MDanceDance, &MBattleZone, &MNudge, &MSnackMachine, &MCeilingLamp1,
+            &MCeilingLamp2, &MPoolLamp, &MPoolTable, &MDoor, &MSkyBoxProva, &MBanner, &MWorldFloor
+    };
+
+    std::vector<Model<VertexOverlay>*> overlayModels = {
+            &MPongR, &MPongL, &MPongBall, &MPongNet, &MPopup
+    };
+
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
-                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,DSWorldFloor;
+                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,
+                     DSWorldFloor,DSPongR, DSPongL, DSPongBall, DSPongNet, DSPopup;
+
+    std::vector<DescriptorSet*> descriptorSets = {
+            &DSGubo, &DSCabinet, &DSCabinet2, &DSAsteroids, &DSCeilingLamp1,
+            &DSCeilingLamp2, &DSPoolLamp, &DSPoolTable, &DSSnackMachine,
+            &DSDanceDance, &DSBattleZone, &DSNudge, &DSRoom, &DSDecoration,
+            &DSCeiling, &DSFloor, &DSskyBox, &DSDoor, &DSSkyBoxProva, &DSBanner,
+            &DSWorldFloor, &DSPongR, &DSPongL, &DSPongBall, &DSPongNet, &DSPopup
+    };
 
 
-	DescriptorSet DSPongR, DSPongL, DSPongBall, DSPongNet, DSPopup;
-
-	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
+    Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TWhite, TPoolLamp, TPoolLampEmi, TForniture, TskyBox,
             TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,
 			TBanner,TWorldFloor,TPopup;
@@ -163,7 +180,7 @@ protected:
 	// Jump parameters
 	bool isJumping = false;         // Flag to indicate if the player is currently jumping
 	float jumpVelocity = 0.0f;      // Initial jump velocity
-	float jumpHeight = 1.5f;        // Height the player can reach during the jump
+	float jumpHeight = 1.3f;        // Height the player can reach during the jump
 	float gravity = 9.8f;           // Acceleration due to gravity
 	float maxJumpTime = 1.3f;       // Maximum duration of the jump
 	float jumpTime = 0.0f;          // Current time elapsed during the jump
@@ -195,12 +212,6 @@ protected:
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
-		// this array contains the bindings:
-		// first  element : the binding number
-		// second element : the type of element (buffer or texture)
-		//                  using the corresponding Vulkan constant
-		// third  element : the pipeline stage where it will be used
-		//                  using the corresponding Vulkan constant
         DSLOBJ.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
@@ -224,39 +235,15 @@ protected:
 
 
 		// Vertex descriptors
-		// this array contains the bindings
-		// first  element : the binding number
-		// second element : the stride of this binging
-		// third  element : whether this parameter change per vertex or per instance
-		//                  using the corresponding Vulkan constant
-		// this array contains the location
-		// first  element : the binding number
-		// second element : the location number
-		// third  element : the offset of this element in the memory record
-		// fourth element : the data type of the element
-		//                  using the corresponding Vulkan constant
-		// fifth  elmenet : the size in byte of the element
-		// sixth  element : a constant defining the element usage
-		//                   POSITION - a vec3 with the position
-		//                   NORMAL   - a vec3 with the normal vector
-		//                   UV       - a vec2 with a UV coordinate
-		//                   COLOR    - a vec4 with a RGBA color
-		//                   TANGENT  - a vec4 with the tangent vector
-		//                   OTHER    - anything else
-		//
-		// ***************** DOUBLE CHECK ********************
-		//    That the Vertex data structure you use in the "offsetoff" and
-		//	in the "sizeof" in the previous array, refers to the correct one,
-		//	if you have more than one vertex format!
-		// ***************************************************
-		VMesh.init(this, {
-			{0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
+
+		VOBJ.init(this, {
+			{0, sizeof(VertexOBJ), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
-				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
+				{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexOBJ, pos),
 					   sizeof(glm::vec3), POSITION},
-				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
+				{0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexOBJ, norm),
 					   sizeof(glm::vec3), NORMAL},
-				{0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
+				{0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOBJ, UV),
 					   sizeof(glm::vec2), UV}
 			});
 
@@ -283,12 +270,12 @@ protected:
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLOBJ });
-		PSkyBoxP.init(this, &VMesh, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLOBJ });
+		PMesh.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLOBJ });
+		PSkyBoxP.init(this, &VOBJ, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLOBJ });
 		PSkyBoxP.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLOBJ });
-		PRoom.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLOBJ });
+		PRoom.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLOBJ });
 
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
@@ -298,9 +285,9 @@ protected:
 		PPong.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PEmi.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/EmiFragTest.spv", { &DSLGubo, &DSLAdvanced});
+		PEmi.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/EmiFragTest.spv", { &DSLGubo, &DSLAdvanced});
 
-		PFloor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/FloorFrag.spv", { &DSLGubo, &DSLOBJ });
+		PFloor.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/FloorFrag.spv", { &DSLGubo, &DSLOBJ });
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -308,25 +295,25 @@ protected:
 		// The second parameter is the pointer to the vertex definition for this model
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		MCabinet1.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
-		MCabinet2.init(this, &VMesh, "Models/Cabinet.obj", OBJ);
-		MAsteroids.init(this, &VMesh, "Models/Asteroids.obj", OBJ);
-		MDanceDance.init(this, &VMesh, "Models/DanceDance.obj", OBJ);
-		MBattleZone.init(this, &VMesh, "Models/BattleZone.obj", OBJ);
-		MNudge.init(this, &VMesh, "Models/Nudge.obj", OBJ);
-		MRoom.init(this, &VMesh, "Models/RoomV5.obj", OBJ);
-		MCeiling.init(this, &VMesh, "Models/CeilingV4.obj", OBJ);
-		MDecoration.init(this, &VMesh, "Models/Decoration3.obj", OBJ);
-		MFloor.init(this, &VMesh, "Models/Floor.obj", OBJ);
-		MCeilingLamp1.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
-		MCeilingLamp2.init(this, &VMesh, "Models/PointLightLamp.obj", OBJ);
-		MPoolLamp.init(this, &VMesh,"Models/PoolLampProva.obj", OBJ);
-		MPoolTable.init(this, &VMesh, "Models/POOLTABLE.obj", OBJ);
-		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
-		MSkyBoxProva.init(this, &VMesh, "Models/SkyBoxCube.obj", OBJ);
-		MDoor.init(this, &VMesh, "Models/shutterDoor.obj", OBJ);
-		MBanner.init(this, &VMesh, "Models/Insegna.obj", OBJ);
-		MWorldFloor.init(this, &VMesh, "Models/WorldFloor.obj", OBJ);
+		MCabinet1.init(this, &VOBJ, "Models/Cabinet.obj", OBJ);
+		MCabinet2.init(this, &VOBJ, "Models/Cabinet.obj", OBJ);
+		MAsteroids.init(this, &VOBJ, "Models/Asteroids.obj", OBJ);
+		MDanceDance.init(this, &VOBJ, "Models/DanceDance.obj", OBJ);
+		MBattleZone.init(this, &VOBJ, "Models/BattleZone.obj", OBJ);
+		MNudge.init(this, &VOBJ, "Models/Nudge.obj", OBJ);
+		MRoom.init(this, &VOBJ, "Models/RoomV5.obj", OBJ);
+		MCeiling.init(this, &VOBJ, "Models/CeilingV4.obj", OBJ);
+		MDecoration.init(this, &VOBJ, "Models/Decoration3.obj", OBJ);
+		MFloor.init(this, &VOBJ, "Models/Floor.obj", OBJ);
+		MCeilingLamp1.init(this, &VOBJ, "Models/PointLightLamp.obj", OBJ);
+		MCeilingLamp2.init(this, &VOBJ, "Models/PointLightLamp.obj", OBJ);
+		MPoolLamp.init(this, &VOBJ,"Models/PoolLampProva.obj", OBJ);
+		MPoolTable.init(this, &VOBJ, "Models/POOLTABLE.obj", OBJ);
+		MSnackMachine.init(this, &VOBJ, "Models/NukaCola.obj", OBJ);
+		MSkyBoxProva.init(this, &VOBJ, "Models/SkyBoxCube.obj", OBJ);
+		MDoor.init(this, &VOBJ, "Models/shutterDoor.obj", OBJ);
+		MBanner.init(this, &VOBJ, "Models/Insegna.obj", OBJ);
+		MWorldFloor.init(this, &VOBJ, "Models/WorldFloor.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 
@@ -435,7 +422,7 @@ protected:
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() {
 		// This creates a new pipeline (with the current surface), using its shaders
-        std::vector<Pipeline*> pipelines = {&PMesh, &POverlay, &PSimple, &PSkyBoxP, &PRoom, &PPong, &PEmi, &PFloor};
+
         for (size_t i = 0; i < pipelines.size(); i++) {
             pipelines[i]->create();
         }
@@ -572,40 +559,13 @@ protected:
 	// All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
 	void pipelinesAndDescriptorSetsCleanup() {
 		// Cleanup pipelines
-		PMesh.cleanup();
-		POverlay.cleanup();
-		PSimple.cleanup();
-        PSkyBoxP.cleanup();
-		PPong.cleanup();
-		PEmi.cleanup();
-		PFloor.cleanup();
+        for (size_t i = 0; i < pipelines.size(); i++) {
+            pipelines[i]->cleanup();
+        }
 		// Cleanup datasets
-		DSCabinet.cleanup();
-        DSCabinet2.cleanup();
-        DSAsteroids.cleanup();
-        DSDanceDance.cleanup();
-        DSBattleZone.cleanup();
-        DSNudge.cleanup();
-        DSSnackMachine.cleanup();
-		DSRoom.cleanup();
-		DSDecoration.cleanup();
-		DSCeiling.cleanup();
-		DSFloor.cleanup();
-		DSGubo.cleanup();
-		DSCeilingLamp1.cleanup();
-		DSCeilingLamp2.cleanup();
-		DSPoolLamp.cleanup();
-		DSPoolTable.cleanup();
-		DSSkyBoxProva.cleanup();
-        DSDoor.cleanup();
-
-		DSPopup.cleanup();
-		DSBanner.cleanup();
-		DSWorldFloor.cleanup();
-		DSPongR.cleanup();
-		DSPongL.cleanup();
-		DSPongBall.cleanup();
-		DSPongNet.cleanup();
+        for (size_t i = 0; i < descriptorSets.size(); i++) {
+            descriptorSets[i]->cleanup();
+        }
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -621,30 +581,13 @@ protected:
         }
 
 		// Cleanup models
-		MCabinet1.cleanup();
-        MCabinet2.cleanup();
-        MAsteroids.cleanup();
-        MDanceDance.cleanup();
-        MBattleZone.cleanup();
-        MNudge.cleanup();
-		MRoom.cleanup();
-		MDecoration.cleanup();
-		MCeiling.cleanup();
-		MFloor.cleanup();
-		MCeilingLamp1.cleanup();
-		MCeilingLamp2.cleanup();
-		MPoolLamp.cleanup();
-		MPoolTable.cleanup();
-        MSnackMachine.cleanup();
-        MDoor.cleanup();
-		MBanner.cleanup();
-		
-		MPopup.cleanup();
-		MWorldFloor.cleanup();
-		MPongR.cleanup();
-		MPongL.cleanup();
-		MPongBall.cleanup();
-		MPongNet.cleanup();
+        for (size_t i = 0; i < objModels.size(); i++) {
+            objModels[i]->cleanup();
+        }
+
+        for (size_t i = 0; i < overlayModels.size(); i++) {
+            overlayModels[i]->cleanup();
+        }
 
 		// Cleanup descriptor set layouts
         DSLOBJ.cleanup();
@@ -654,14 +597,9 @@ protected:
 
 
 		// Destroies the pipelines
-		PMesh.destroy();
-		POverlay.destroy();
-		PSimple.destroy();
-		PRoom.destroy();
-        PSkyBoxP.destroy();
-		PPong.destroy();
-		PEmi.destroy();
-		PFloor.destroy();
+        for (size_t i = 0; i < pipelines.size(); i++) {
+            pipelines[i]->destroy();
+        }
 	}
 
 	// Here it is the creation of the command buffer:
@@ -673,7 +611,6 @@ protected:
 		case 0:
 			// sets global uniforms (see below from parameters explanation)
 			DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
-
 			// binds the pipeline
 			PMesh.bind(commandBuffer);
 			// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
@@ -909,15 +846,15 @@ protected:
 					MOVE_SPEED = 2.0f;
 				}
 
-				/*// Jumping
-				if (glfwGetKey(window, GLFW_KEY_SPACE) && !isJumping) {
+				// Jumping
+				if (glfwGetKey(window, GLFW_KEY_J) && !isJumping) {
 					// Start the jump
 					isJumping = true;
 					jumpVelocity = sqrt(2.0f * gravity * jumpHeight);  // Calculate the initial velocity based on the desired jump height
 					jumpTime = 0.0f;
-				}*/
+				}
 
-				/*
+
 				// Check if the player is currently jumping
 				if (isJumping) {
 					// Update the jump time
@@ -928,19 +865,19 @@ protected:
 
 					// Calculate the new position based on the jump velocity
 					glm::vec3 jumpOffset = glm::vec3(0, jumpVelocity * deltaT, 0);
-					Pos += jumpOffset;
+					Pos[currScene] += jumpOffset;
 
 					// Check if the maximum jump time is reached or if the player has landed
-					if (jumpTime >= maxJumpTime || Pos.y <= 0.0f) {
+					if (jumpTime >= maxJumpTime || Pos[currScene].y <= 0.0f) {
 						// End the jump
 						isJumping = false;
 						jumpVelocity = 0.0f;
 						jumpTime = 0.0f;
 
 						// Ensure the player is on the ground level
-						Pos.y = 0.0f;
+						Pos[currScene].y = 0.0f;
 					}
-				}*/
+				}
 
 				// Rotation
 				alpha[currScene] = alpha[currScene] - ROT_SPEED * deltaT * r.y;
