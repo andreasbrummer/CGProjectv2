@@ -330,8 +330,8 @@ protected:
 
 
 		//Mesh of the popup alert
-		MPopup.vertices = { {{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
-						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}} };
+		MPopup.vertices = { {{-0.7f, 0.5f}, {0.0f,0.0f}}, {{-0.7f, 0.95f}, {0.0f,1.0f}},
+						 {{ 0.7f, 0.5f}, {1.0f,0.0f}}, {{ 0.7f, 0.95f}, {1.0f,1.0f}} };
 		MPopup.indices = { 0, 1, 2,    1, 2, 3 };
 		MPopup.initMesh(this, &VOverlay);
 
@@ -420,7 +420,7 @@ protected:
 		TWorldFloor.init(this, "textures/lightGreen.jpg");
 		TWhite.init(this, "textures/white.png");
 
-		TPopup.init(this, "textures/PressSpace.png");
+		TPopup.init(this, "textures/PressP.png");
 
 		const char* T2fn[] = { "textures/sky/px.png", "textures/sky/nx.png",
 							  "textures/sky/py.png",   "textures/sky/ny.png",
