@@ -102,7 +102,8 @@ protected:
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexOBJ> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBox,MBanner,MWorldFloor;
+                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBox,MBanner,MWorldFloor,
+					  MLantern;
 
 
 	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet, MPopup;
@@ -121,7 +122,8 @@ protected:
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBox,DSBanner,
-                     DSWorldFloor,DSPongR, DSPongL, DSPongBall, DSPongNet, DSPopup;
+                     DSWorldFloor,DSPongR, DSPongL, DSPongBall, DSPongNet, DSPopup,
+					 DSJLantern1,DSJLantern2;
 
     std::vector<DescriptorSet*> descriptorSets = {
             &DSGubo, &DSCabinet, &DSCabinet2, &DSAsteroids, &DSCeilingLamp1,
@@ -135,7 +137,7 @@ protected:
     Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TWhite, TPoolLamp, TPoolLampEmi, TForniture, TskyBox,
             TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,
-			TBanner,TWorldFloor,TPopup;
+			TBanner,TWorldFloor,TPopup,TLanternColor,TLanternEmi;
 
     std::vector<Texture*> textures = {
             &TCabinet,&TRoom,&TDecoration,&TCeiling,&TFloor,&TWhite,
@@ -173,7 +175,8 @@ protected:
 	OBJUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyBox,uboBanner,uboWorldFloor;
+                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyBox,
+					 uboBanner,uboWorldFloor, uboJLantern1, uboJLantern2;
 
 	OverlayUniformBlock uboPopup,uboPongNet;
 	PongUniformBlock uboPong;
@@ -338,6 +341,7 @@ protected:
 		MDoor.init(this, &VOBJ, "Models/shutterDoor.obj", OBJ);
 		MBanner.init(this, &VOBJ, "Models/Insegna.obj", OBJ);
 		MWorldFloor.init(this, &VOBJ, "Models/WorldFloor.obj", OBJ);
+		MLantern.init(this, &VOBJ, "Models/japaneseLantern.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 
@@ -431,6 +435,8 @@ protected:
 		TBanner.init(this, "textures/DarkGrey.png");
 		TWorldFloor.init(this, "textures/myGrid.png");
 		TWhite.init(this, "textures/white.png");
+		TLanternColor.init(this, "textures/JapaneseLanternTextures/LanternColor.png");
+		TLanternEmi.init(this, "textures/JapaneseLanternTextures/LanternEmi.png");
 
 		TPopup.init(this, "textures/PressP.png");
 
@@ -476,6 +482,18 @@ protected:
                 {1, TEXTURE, 0, &TPoolLamp},
                 {2,TEXTURE,0,&TPoolLampEmi}
         });
+
+		DSJLantern1.init(this, &DSLAdvanced, {
+				{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
+				{1, TEXTURE, 0, &TLanternColor},
+				{2,TEXTURE,0,&TLanternEmi}
+		});
+
+		DSJLantern2.init(this, &DSLAdvanced, {
+		{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
+		{1, TEXTURE, 0, &TLanternColor},
+		{2,TEXTURE,0,&TLanternEmi}
+			});
 
         DSGubo.init(this, &DSLGubo, {
                 {0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
@@ -658,6 +676,15 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
 
+			MLantern.bind(commandBuffer);
+			DSJLantern1.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MLantern.indices.size()), 1, 0, 0, 0);
+
+			DSJLantern2.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MLantern.indices.size()), 1, 0, 0, 0);
+
 			PFloor.bind(commandBuffer);
 
 			MFloor.bind(commandBuffer);
@@ -773,7 +800,7 @@ protected:
 				}
 
 				// Jumping
-				if (glfwGetKey(window, GLFW_KEY_J) && !isJumping) {
+				if (glfwGetKey(window, GLFW_KEY_SPACE) && !isJumping) {
 					// Start the jump
 					isJumping = true;
 					jumpVelocity = sqrt(2.0f * gravity * jumpHeight);  // Calculate the initial velocity based on the desired jump height
@@ -886,7 +913,7 @@ protected:
 
 		bool rangeVideogame = Pos[0].x < 5.5f && Pos[0].x > 0.0f && Pos[0].z < 0.0f && Pos[0].z > -2.5f;
 
-		if (glfwGetKey(window, GLFW_KEY_SPACE) && currScene == 0 && rangeVideogame || glfwGetKey(window, GLFW_KEY_SPACE) && currScene == 1) {
+		if (glfwGetKey(window, GLFW_KEY_P) && currScene == 0 && rangeVideogame || glfwGetKey(window, GLFW_KEY_P) && currScene == 1) {
 			if (!debounce) {
 				debounce = true;
 				curDebounce = GLFW_KEY_SPACE;
@@ -1098,6 +1125,24 @@ protected:
 			uboWorldFloor.mMat = World;
 			uboWorldFloor.nMat = glm::inverse(glm::transpose(World));
 			DSWorldFloor.map(currentImage, &uboWorldFloor, sizeof(uboWorldFloor), 0);
+
+			World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
+				translate(glm::mat4(1.0), glm::vec3(-13.0f, 2.8f, 11.0f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.7f));
+			uboJLantern1.amb = 1.0f; uboJLantern1.gamma = 180.0f; uboJLantern1.sColor = glm::vec3(1.0f);
+			uboJLantern1.mvpMat = Prj * View * World;
+			uboJLantern1.mMat = World;
+			uboJLantern1.nMat = glm::inverse(glm::transpose(World));
+			DSJLantern1.map(currentImage, &uboJLantern1, sizeof(uboJLantern1), 0);
+
+			World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
+				translate(glm::mat4(1.0), glm::vec3(-8.3f, 2.8f, 11.0f)) *
+				glm::scale(glm::mat4(1), glm::vec3(0.7f));
+			uboJLantern2.amb = 1.0f; uboJLantern2.gamma = 180.0f; uboJLantern2.sColor = glm::vec3(1.0f);
+			uboJLantern2.mvpMat = Prj * View * World;
+			uboJLantern2.mMat = World;
+			uboJLantern2.nMat = glm::inverse(glm::transpose(World));
+			DSJLantern2.map(currentImage, &uboJLantern2, sizeof(uboJLantern2), 0);
 
 			break;
 
