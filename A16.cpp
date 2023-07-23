@@ -84,35 +84,41 @@ protected:
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay, DSLSimple,DSLAdvanced;
+	DescriptorSetLayout DSLGubo, DSLOBJ, DSLOverlay, DSLAdvanced;
 	// Vertex formats
 	VertexDescriptor VMesh,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
 	Pipeline PMesh, POverlay, PSimple, PSkyBoxP, PRoom, PPong, PEmi, PFloor;
 
-	// Models, textures and Descriptors (values assigned to the uniforms)
+
+    // Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexMesh> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
                       MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva,MBanner,MWorldFloor;
 
-	Model<VertexOverlay> MPopup;
 
-	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet;
+	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet, MPopup;
 
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,DSWorldFloor;
 
-	DescriptorSet DSPopup;
-	DescriptorSet DSPongR, DSPongL, DSPongBall, DSPongNet;
+
+	DescriptorSet DSPongR, DSPongL, DSPongBall, DSPongNet, DSPopup;
 
 	Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TWhite, TPoolLamp, TPoolLampEmi, TForniture, TskyBox,
             TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,
 			TBanner,TWorldFloor,TPopup;
+
+    std::vector<Texture*> textures = {
+            &TCabinet,&TRoom,&TDecoration,&TCeiling,&TFloor,&TWhite,
+            &TPoolLamp,&TPoolLampEmi,&TForniture,&TAsteroids,&TskyBox,
+            &TDanceDance,&TBattleZone,&TNudge,&TSnackMachine,&TPoolTable,
+            &TDoor,&TBanner,&TPopup,&TWorldFloor };
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
@@ -195,7 +201,7 @@ protected:
 		//                  using the corresponding Vulkan constant
 		// third  element : the pipeline stage where it will be used
 		//                  using the corresponding Vulkan constant
-		DSLMesh.init(this, {
+        DSLOBJ.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
@@ -207,11 +213,6 @@ protected:
 
 		DSLGubo.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-			});
-
-		DSLSimple.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
 
 		DSLAdvanced.init(this, {
@@ -282,12 +283,12 @@ protected:
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLMesh });
-		PSkyBoxP.init(this, &VMesh, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLMesh });
+		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLOBJ });
+		PSkyBoxP.init(this, &VMesh, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLOBJ });
 		PSkyBoxP.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
-		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLSimple });
-		PRoom.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLMesh });
+		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLOBJ });
+		PRoom.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLOBJ });
 
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
@@ -299,7 +300,7 @@ protected:
 
 		PEmi.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/EmiFragTest.spv", { &DSLGubo, &DSLAdvanced});
 
-		PFloor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/FloorFrag.spv", { &DSLGubo, &DSLMesh });
+		PFloor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/FloorFrag.spv", { &DSLGubo, &DSLOBJ });
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -324,7 +325,7 @@ protected:
 		MSnackMachine.init(this, &VMesh, "Models/NukaCola.obj", OBJ);
 		MSkyBoxProva.init(this, &VMesh, "Models/SkyBoxCube.obj", OBJ);
 		MDoor.init(this, &VMesh, "Models/shutterDoor.obj", OBJ);
-		MBanner.init(this, &VMesh, "Models/insegna.obj", OBJ);
+		MBanner.init(this, &VMesh, "Models/Insegna.obj", OBJ);
 		MWorldFloor.init(this, &VMesh, "Models/WorldFloor.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
@@ -417,7 +418,7 @@ protected:
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/shutterTexture.png");
 		TBanner.init(this, "textures/DarkGrey.png");
-		TWorldFloor.init(this, "textures/lightGreen.jpg");
+		TWorldFloor.init(this, "textures/myGrid.png");
 		TWhite.init(this, "textures/white.png");
 
 		TPopup.init(this, "textures/PressP.png");
@@ -434,120 +435,89 @@ protected:
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() {
 		// This creates a new pipeline (with the current surface), using its shaders
-		PMesh.create();
-		POverlay.create();
-		PSimple.create();
-		PRoom.create();
-        PSkyBoxP.create();
-		PPong.create();
-		PEmi.create();
-		PFloor.create();
+        std::vector<Pipeline*> pipelines = {&PMesh, &POverlay, &PSimple, &PSkyBoxP, &PRoom, &PPong, &PEmi, &PFloor};
+        for (size_t i = 0; i < pipelines.size(); i++) {
+            pipelines[i]->create();
+        }
 
 		// Here you define the data set
-		DSCabinet.init(this, &DSLSimple, {
+		DSCabinet.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCabinet}
 		});
 
-        DSCabinet2.init(this, &DSLSimple, {
+        DSCabinet2.init(this, &DSLOBJ, {
             {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
             {1, TEXTURE, 0, &TCabinet}
         });
 
-        DSAsteroids.init(this, &DSLSimple, {
+        DSAsteroids.init(this, &DSLOBJ, {
             {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
             {1, TEXTURE, 0, &TAsteroids}
         });
 
-        DSDanceDance.init(this, &DSLSimple, {
+        DSDanceDance.init(this, &DSLOBJ, {
             {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
             {1, TEXTURE, 0, &TDanceDance}
         });
-        DSBattleZone.init(this, &DSLSimple, {
+        DSBattleZone.init(this, &DSLOBJ, {
             {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
             {1, TEXTURE, 0, &TBattleZone}
         });
 
-        DSNudge.init(this, &DSLSimple, {
+        DSNudge.init(this, &DSLOBJ, {
             {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
             {1, TEXTURE, 0, &TNudge}
         });
 
-        DSDoor.init(this, &DSLSimple, {
+        DSDoor.init(this, &DSLOBJ, {
             {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
             {1, TEXTURE, 0, &TDoor}
         });
 		
-		DSRoom.init(this, &DSLSimple, {
+		DSRoom.init(this, &DSLOBJ, {
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TRoom},
 		});
 
-		DSDecoration.init(this, &DSLSimple, {
+		DSDecoration.init(this, &DSLOBJ, {
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TDecoration},
 		});
 
-		DSCeiling.init(this, &DSLMesh, {
+		DSCeiling.init(this, &DSLOBJ, {
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeiling}
 		});
 
-		DSFloor.init(this, &DSLMesh, {
+		DSFloor.init(this, &DSLOBJ, {
 			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TFloor}
 		});
 
-        DSSkyBoxProva.init(this, &DSLMesh, {
+        DSSkyBoxProva.init(this, &DSLOBJ, {
             {0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
             {1, TEXTURE, 0, &TskyBox}
         });
 
-		DSGubo.init(this, &DSLGubo, {
-			{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
-		});
-
-		DSPoolLamp.init(this, &DSLAdvanced, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TPoolLamp},
-			{2,TEXTURE,0,&TPoolLampEmi}
-			});
-
-		DSCeilingLamp1.init(this, &DSLAdvanced, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TPoolLamp},
-			{2,TEXTURE,0,&TPoolLampEmi}
-			});
-
-		DSCeilingLamp2.init(this, &DSLAdvanced, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TPoolLamp},
-			{2,TEXTURE,0,&TPoolLampEmi}
-			});
-
-		DSPoolTable.init(this, &DSLSimple, {
+		DSPoolTable.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TPoolTable}
 		});
 
-		DSSnackMachine.init(this, &DSLSimple, {
+		DSSnackMachine.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TSnackMachine}
 		});
 
-		DSBanner.init(this, &DSLSimple, {
+        DSWorldFloor.init(this, &DSLOBJ, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TWorldFloor}
+        });
+
+		DSBanner.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TBanner}
-			});
-
-		DSPopup.init(this, &DSLOverlay, {
-			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TPopup}
-		});
-
-		DSWorldFloor.init(this, &DSLMesh, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TWorldFloor}
 			});
 
 		DSPongR.init(this, &DSLOverlay, {
@@ -569,6 +539,33 @@ protected:
 			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TWhite}
 		});
+
+        DSPopup.init(this, &DSLOverlay, {
+                {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TPopup}
+        });
+
+        DSPoolLamp.init(this, &DSLAdvanced, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TPoolLamp},
+                {2,TEXTURE,0,&TPoolLampEmi}
+        });
+
+        DSCeilingLamp1.init(this, &DSLAdvanced, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TPoolLamp},
+                {2,TEXTURE,0,&TPoolLampEmi}
+        });
+
+        DSCeilingLamp2.init(this, &DSLAdvanced, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TPoolLamp},
+                {2,TEXTURE,0,&TPoolLampEmi}
+        });
+
+        DSGubo.init(this, &DSLGubo, {
+                {0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
+        });
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -616,28 +613,12 @@ protected:
 	// You also have to destroy the pipelines: since they need to be rebuilt, they have two different
 	// methods: .cleanup() recreates them, while .destroy() delete them completely
 	void localCleanup() {
+
+
 		// Cleanup textures
-		TCabinet.cleanup();
-		TRoom.cleanup();
-		TDecoration.cleanup();
-		TCeiling.cleanup();
-		TFloor.cleanup();
-		TWhite.cleanup();
-		TPoolLamp.cleanup();
-		TPoolLampEmi.cleanup();
-		TForniture.cleanup();
-        TAsteroids.cleanup();
-		TskyBox.cleanup();
-        TDanceDance.cleanup();
-        TBattleZone.cleanup();
-        TNudge.cleanup();
-        TSnackMachine.cleanup();
-        TPoolTable.cleanup();
-        TDoor.cleanup();
-		TBanner.cleanup();
-		
-		TPopup.cleanup();
-		TWorldFloor.cleanup();
+        for (Texture* texture : textures) {
+            texture->cleanup();
+        }
 
 		// Cleanup models
 		MCabinet1.cleanup();
@@ -666,10 +647,9 @@ protected:
 		MPongNet.cleanup();
 
 		// Cleanup descriptor set layouts
-		DSLMesh.cleanup();
+        DSLOBJ.cleanup();
 		DSLOverlay.cleanup();
 		DSLGubo.cleanup();
-		DSLSimple.cleanup();
 		DSLAdvanced.cleanup();
 
 
@@ -910,8 +890,9 @@ protected:
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
-	
-		getSixAxis(deltaT, m, r, fire);
+        glm::vec3 ux ;
+        glm::vec3 uz ;
+        getSixAxis(deltaT, m, r, fire);
 		static bool wasFire = false;
 		bool handleFire = (wasFire && (!fire));
 		wasFire = fire;
@@ -968,8 +949,8 @@ protected:
 					(beta[currScene] > glm::radians(90.0f) ? glm::radians(90.0f) : beta[currScene]);
 
 				// Position
-				glm::vec3 ux = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
-				glm::vec3 uz = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
+                ux = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
+                uz = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
 				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.x * ux * deltaT;
 				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
 				//Pos[currScene].y = 0.0f;
