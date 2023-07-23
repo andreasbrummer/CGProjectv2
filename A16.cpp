@@ -14,7 +14,7 @@
 //        mat4  : alignas(16)
 
 
-struct MeshUniformBlock {
+struct OBJUniformBlock {
 	alignas(4) float amb;
 	alignas(4) float gamma;
 	alignas(16) glm::vec3 sColor;
@@ -84,19 +84,19 @@ protected:
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLOBJ, DSLOverlay, DSLAdvanced;
+	DescriptorSetLayout DSLGubo, DSLOBJ, DSLAdvanced;
 	// Vertex formats
 	VertexDescriptor VOBJ,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh, POverlay, PSimple, PSkyBoxP, PRoom, PPong, PEmi, PFloor;
-    std::vector<Pipeline*> pipelines = {&PMesh, &POverlay, &PSimple, &PSkyBoxP, &PRoom, &PPong, &PEmi, &PFloor};
+	Pipeline POBJ, POverlay, PSimple, PSkyBox, PRoom, PPong, PEmi, PFloor;
+    std::vector<Pipeline*> pipelines = {&POBJ, &POverlay, &PSimple, &PSkyBox, &PRoom, &PPong, &PEmi, &PFloor};
 
     // Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
 	Model<VertexOBJ> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
-                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBoxProva,MBanner,MWorldFloor;
+                      MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBox,MBanner,MWorldFloor;
 
 
 	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet, MPopup;
@@ -104,7 +104,7 @@ protected:
     std::vector<Model<VertexOBJ>*> objModels = {
             &MCabinet1, &MCabinet2, &MAsteroids, &MRoom, &MDecoration, &MCeiling,
             &MFloor, &MDanceDance, &MBattleZone, &MNudge, &MSnackMachine, &MCeilingLamp1,
-            &MCeilingLamp2, &MPoolLamp, &MPoolTable, &MDoor, &MSkyBoxProva, &MBanner, &MWorldFloor
+            &MCeilingLamp2, &MPoolLamp, &MPoolTable, &MDoor, &MSkyBox, &MBanner, &MWorldFloor
     };
 
     std::vector<Model<VertexOverlay>*> overlayModels = {
@@ -114,14 +114,14 @@ protected:
 	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
-                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBoxProva,DSBanner,
+                     DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBox,DSBanner,
                      DSWorldFloor,DSPongR, DSPongL, DSPongBall, DSPongNet, DSPopup;
 
     std::vector<DescriptorSet*> descriptorSets = {
             &DSGubo, &DSCabinet, &DSCabinet2, &DSAsteroids, &DSCeilingLamp1,
             &DSCeilingLamp2, &DSPoolLamp, &DSPoolTable, &DSSnackMachine,
             &DSDanceDance, &DSBattleZone, &DSNudge, &DSRoom, &DSDecoration,
-            &DSCeiling, &DSFloor, &DSskyBox, &DSDoor, &DSSkyBoxProva, &DSBanner,
+            &DSCeiling, &DSFloor, &DSskyBox, &DSDoor, &DSSkyBox, &DSBanner,
             &DSWorldFloor, &DSPongR, &DSPongL, &DSPongBall, &DSPongNet, &DSPopup
     };
 
@@ -138,10 +138,10 @@ protected:
             &TDoor,&TBanner,&TPopup,&TWorldFloor };
 
 	// C++ storage for uniform variables
-	MeshUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
+	OBJUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
-                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyboxProva,uboBanner,uboWorldFloor;
+                     uboNudge, uboSnackMachine, uboPoolTable,uboDoor,uboSkyBox,uboBanner,uboWorldFloor;
 
 	OverlayUniformBlock uboPopup,uboPongNet;
 	PongUniformBlock uboPong;
@@ -156,9 +156,7 @@ protected:
 	glm::mat4 World = glm::mat4(1);
 	glm::vec3 Pos[2] = { glm::vec3(12,0,-25), glm::vec3(0,0,6) };
 	glm::vec3 cameraPos;
-	//float alpha;
-	//float beta;
-	//float RoomRot = 0.0;
+
 	float alpha[2] = { glm::radians(0.0f), 0.0f };
 	float beta[2] = { glm::radians(0.0f), 0.0f };
 	float pongLength = 0.5f;
@@ -216,12 +214,6 @@ protected:
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 			});
-
-		DSLOverlay.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
-
 		DSLGubo.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 			});
@@ -270,18 +262,18 @@ protected:
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-		PMesh.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLOBJ });
-		PSkyBoxP.init(this, &VOBJ, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLOBJ });
-		PSkyBoxP.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
+        POBJ.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo,&DSLOBJ });
+        PSkyBox.init(this, &VOBJ, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLOBJ });
+        PSkyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLOBJ });
 		PRoom.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLOBJ });
 
-		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOverlay });
+		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOBJ });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PPong.init(this, &VOverlay, "shaders/PongVert.spv", "shaders/PongFrag.spv", { &DSLOverlay });
+		PPong.init(this, &VOverlay, "shaders/PongVert.spv", "shaders/PongFrag.spv", { &DSLOBJ });
 		PPong.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
@@ -310,7 +302,7 @@ protected:
 		MPoolLamp.init(this, &VOBJ,"Models/PoolLampProva.obj", OBJ);
 		MPoolTable.init(this, &VOBJ, "Models/POOLTABLE.obj", OBJ);
 		MSnackMachine.init(this, &VOBJ, "Models/NukaCola.obj", OBJ);
-		MSkyBoxProva.init(this, &VOBJ, "Models/SkyBoxCube.obj", OBJ);
+		MSkyBox.init(this, &VOBJ, "Models/SkyBoxCube.obj", OBJ);
 		MDoor.init(this, &VOBJ, "Models/shutterDoor.obj", OBJ);
 		MBanner.init(this, &VOBJ, "Models/Insegna.obj", OBJ);
 		MWorldFloor.init(this, &VOBJ, "Models/WorldFloor.obj", OBJ);
@@ -429,123 +421,123 @@ protected:
 
 		// Here you define the data set
 		DSCabinet.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCabinet}
 		});
 
         DSCabinet2.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TCabinet}
         });
 
         DSAsteroids.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TAsteroids}
         });
 
         DSDanceDance.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TDanceDance}
         });
         DSBattleZone.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TBattleZone}
         });
 
         DSNudge.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TNudge}
         });
 
         DSDoor.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TDoor}
         });
 		
 		DSRoom.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TRoom},
 		});
 
 		DSDecoration.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TDecoration},
 		});
 
 		DSCeiling.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TCeiling}
 		});
 
 		DSFloor.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TFloor}
 		});
 
-        DSSkyBoxProva.init(this, &DSLOBJ, {
-            {0,UNIFORM,sizeof(MeshUniformBlock), nullptr},
+        DSSkyBox.init(this, &DSLOBJ, {
+            {0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TskyBox}
         });
 
 		DSPoolTable.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TPoolTable}
 		});
 
 		DSSnackMachine.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TSnackMachine}
 		});
 
         DSWorldFloor.init(this, &DSLOBJ, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TWorldFloor}
         });
 
 		DSBanner.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TBanner}
 			});
 
-		DSPongR.init(this, &DSLOverlay, {
+		DSPongR.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TWhite}
 		});
 
-		DSPongL.init(this, &DSLOverlay, {
+		DSPongL.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TWhite}
 		});
 
-		DSPongBall.init(this, &DSLOverlay, {
+		DSPongBall.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TWhite}
 		});
 
-		DSPongNet.init(this, &DSLOverlay, {
+		DSPongNet.init(this, &DSLOBJ, {
 			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TWhite}
 		});
 
-        DSPopup.init(this, &DSLOverlay, {
+        DSPopup.init(this, &DSLOBJ, {
                 {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TPopup}
         });
 
         DSPoolLamp.init(this, &DSLAdvanced, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TPoolLamp},
                 {2,TEXTURE,0,&TPoolLampEmi}
         });
 
         DSCeilingLamp1.init(this, &DSLAdvanced, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TPoolLamp},
                 {2,TEXTURE,0,&TPoolLampEmi}
         });
 
         DSCeilingLamp2.init(this, &DSLAdvanced, {
-                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TPoolLamp},
                 {2,TEXTURE,0,&TPoolLampEmi}
         });
@@ -591,7 +583,6 @@ protected:
 
 		// Cleanup descriptor set layouts
         DSLOBJ.cleanup();
-		DSLOverlay.cleanup();
 		DSLGubo.cleanup();
 		DSLAdvanced.cleanup();
 
@@ -610,9 +601,9 @@ protected:
 		switch (currScene) {
 		case 0:
 			// sets global uniforms (see below from parameters explanation)
-			DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+			DSGubo.bind(commandBuffer, POBJ, 0, currentImage);
 			// binds the pipeline
-			PMesh.bind(commandBuffer);
+            POBJ.bind(commandBuffer);
 			// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
 			// binds the model
 			// For a Model object, this command binds the corresponing index and vertex buffer
@@ -632,64 +623,64 @@ protected:
 
 
 			MCabinet1.bind(commandBuffer);
-			DSCabinet.bind(commandBuffer, PMesh, 1, currentImage);
+			DSCabinet.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCabinet1.indices.size()), 1, 0, 0, 0);
 			MCabinet2.bind(commandBuffer);
-			DSCabinet2.bind(commandBuffer, PMesh, 1, currentImage);
+			DSCabinet2.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCabinet2.indices.size()), 1, 0, 0, 0);
 			MAsteroids.bind(commandBuffer);
-			DSAsteroids.bind(commandBuffer, PMesh, 1, currentImage);
+			DSAsteroids.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MAsteroids.indices.size()), 1, 0, 0, 0);
 
 			MDanceDance.bind(commandBuffer);
-			DSDanceDance.bind(commandBuffer, PMesh, 1, currentImage);
+			DSDanceDance.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MDanceDance.indices.size()), 1, 0, 0, 0);
 
 			MBattleZone.bind(commandBuffer);
-			DSBattleZone.bind(commandBuffer, PMesh, 1, currentImage);
+			DSBattleZone.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MBattleZone.indices.size()), 1, 0, 0, 0);
 
 			MNudge.bind(commandBuffer);
-			DSNudge.bind(commandBuffer, PMesh, 1, currentImage);
+			DSNudge.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MNudge.indices.size()), 1, 0, 0, 0);
 
 			MSnackMachine.bind(commandBuffer);
-			DSSnackMachine.bind(commandBuffer, PMesh, 1, currentImage);
+			DSSnackMachine.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MSnackMachine.indices.size()), 1, 0, 0, 0);
 
 			MPoolTable.bind(commandBuffer);
-			DSPoolTable.bind(commandBuffer, PMesh, 1, currentImage);
+			DSPoolTable.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPoolTable.indices.size()), 1, 0, 0, 0);
 			MDoor.bind(commandBuffer);
-			DSDoor.bind(commandBuffer, PMesh, 1, currentImage);
+			DSDoor.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
 			MDecoration.bind(commandBuffer);
-			DSDecoration.bind(commandBuffer, PMesh, 1, currentImage);
+			DSDecoration.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MDecoration.indices.size()), 1, 0, 0, 0);
 
 			MCeiling.bind(commandBuffer);
-			DSCeiling.bind(commandBuffer, PMesh, 1, currentImage);
+			DSCeiling.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MCeiling.indices.size()), 1, 0, 0, 0);
 
 			MBanner.bind(commandBuffer);
-			DSBanner.bind(commandBuffer, PMesh, 1, currentImage);
+			DSBanner.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
 
 			MWorldFloor.bind(commandBuffer);
-			DSWorldFloor.bind(commandBuffer, PMesh, 1, currentImage);
+			DSWorldFloor.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MWorldFloor.indices.size()), 1, 0, 0, 0);
 
@@ -702,12 +693,12 @@ protected:
 
 			PSimple.bind(commandBuffer);
 
-			DSGubo.bind(commandBuffer, PSkyBoxP, 0, currentImage);
-			PSkyBoxP.bind(commandBuffer);
-			MSkyBoxProva.bind(commandBuffer);
-			DSSkyBoxProva.bind(commandBuffer, PSkyBoxP, 1, currentImage);
+			DSGubo.bind(commandBuffer, PSkyBox, 0, currentImage);
+            PSkyBox.bind(commandBuffer);
+            MSkyBox.bind(commandBuffer);
+			DSSkyBox.bind(commandBuffer, PSkyBox, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MSkyBoxProva.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MSkyBox.indices.size()), 1, 0, 0, 0);
 
 			POverlay.bind(commandBuffer);
 			MPopup.bind(commandBuffer);
@@ -1013,11 +1004,11 @@ protected:
 			World = /*glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.0f)) **/
 				glm::scale(glm::mat4(1), glm::vec3(150.0f));
 
-			uboSkyboxProva.amb = 1.0f; uboSkyboxProva.gamma = 180.0f; uboSkyboxProva.sColor = glm::vec3(1.0f);
-			uboSkyboxProva.mvpMat = Prj * View * World;
-			uboSkyboxProva.mMat = World;
-			uboSkyboxProva.nMat = glm::inverse(glm::transpose(World));
-			DSSkyBoxProva.map(currentImage, &uboSkyboxProva, sizeof(uboSkyboxProva), 0);
+			uboSkyBox.amb = 1.0f; uboSkyBox.gamma = 180.0f; uboSkyBox.sColor = glm::vec3(1.0f);
+            uboSkyBox.mvpMat = Prj * View * World;
+            uboSkyBox.mMat = World;
+            uboSkyBox.nMat = glm::inverse(glm::transpose(World));
+			DSSkyBox.map(currentImage, &uboSkyBox, sizeof(uboSkyBox), 0);
 
 			World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -1.2f)) *
 				glm::scale(glm::mat4(1), glm::vec3(0.018f));
