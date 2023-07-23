@@ -67,15 +67,22 @@ struct VertexOverlay {
 	glm::vec2 UV;
 };
 
-struct VertexSimple {
-	glm::vec3 pos;
-	glm::vec2 UV;
-};
-
 struct OBJStruct{
     DescriptorSet *DS;
     Texture *T;
     int s ;
+    Model<VertexOBJ> *M;
+    Pipeline *P;
+    int currScene;
+};
+
+struct PongStruct{
+    DescriptorSet *DS;
+    Texture *T;
+    int s ;
+    Model<VertexOverlay> *M;
+    Pipeline *P;
+    int currScene;
 };
 
 class A16;
@@ -95,12 +102,12 @@ protected:
 	VertexDescriptor VOBJ,  VOverlay, VSimple;
 
 	// Pipelines [Shader couples]
-	Pipeline POBJ, POverlay, PSimple, PSkyBox, PRoom, PPong, PEmi, PFloor;
-    std::vector<Pipeline*> pipelines = {&POBJ, &POverlay, &PSimple, &PSkyBox, &PRoom, &PPong, &PEmi, &PFloor};
+	Pipeline POBJ, POverlay, PSkyBox, PRoom, PPong, PEmi, PFloor;
+    std::vector<Pipeline*> pipelines = {&POBJ, &POverlay, &PSkyBox, &PRoom, &PPong, &PEmi, &PFloor};
 
     // Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexOBJ> MCabinet1,MCabinet2,MAsteroids, MRoom, MDecoration, MCeiling,
+	Model<VertexOBJ> MCabinet,MAsteroids, MRoom, MDecoration, MCeiling,
                       MFloor,MDanceDance,MBattleZone,MNudge,MSnackMachine, MCeilingLamp1,
                       MCeilingLamp2, MPoolLamp, MPoolTable,MDoor,MSkyBox,MBanner,MWorldFloor,
 					  MLantern;
@@ -109,7 +116,7 @@ protected:
 	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet, MPopup;
 
     std::vector<Model<VertexOBJ>*> objModels = {
-            &MCabinet1, &MCabinet2, &MAsteroids, &MRoom, &MDecoration, &MCeiling,
+            &MCabinet, &MAsteroids, &MRoom, &MDecoration, &MCeiling,
             &MFloor, &MDanceDance, &MBattleZone, &MNudge, &MSnackMachine, &MCeilingLamp1,
             &MCeilingLamp2, &MPoolLamp, &MPoolTable, &MDoor, &MSkyBox, &MBanner, &MWorldFloor
     };
@@ -118,7 +125,7 @@ protected:
             &MPongR, &MPongL, &MPongBall, &MPongNet, &MPopup
     };
 
-	DescriptorSet    DSGubo, DSCabinet, DSCabinet2, DSAsteroids, DSCeilingLamp1,
+	DescriptorSet    DSGubo, DSCabinet1, DSCabinet2, DSAsteroids, DSCeilingLamp1,
                      DSCeilingLamp2, DSPoolLamp, DSPoolTable, DSSnackMachine,
                      DSDanceDance,DSBattleZone,DSNudge, DSRoom, DSDecoration,
                      DSCeiling, DSFloor, DSskyBox,DSDoor, DSSkyBox,DSBanner,
@@ -126,7 +133,7 @@ protected:
 					 DSJLantern1,DSJLantern2;
 
     std::vector<DescriptorSet*> descriptorSets = {
-            &DSGubo, &DSCabinet, &DSCabinet2, &DSAsteroids, &DSCeilingLamp1,
+            &DSGubo, &DSCabinet1, &DSCabinet2, &DSAsteroids, &DSCeilingLamp1,
             &DSCeilingLamp2, &DSPoolLamp, &DSPoolTable, &DSSnackMachine,
             &DSDanceDance, &DSBattleZone, &DSNudge, &DSRoom, &DSDecoration,
             &DSCeiling, &DSFloor, &DSskyBox, &DSDoor, &DSSkyBox, &DSBanner,
@@ -146,27 +153,31 @@ protected:
             &TDoor,&TBanner,&TPopup,&TWorldFloor };
 
     std::vector<OBJStruct*> Objects = {
-            new OBJStruct{ &DSCabinet, &TCabinet ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSCabinet2, &TCabinet ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSAsteroids, &TAsteroids,sizeof(OBJUniformBlock) },
-            new OBJStruct{ &DSDanceDance, &TDanceDance ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSBattleZone, &TBattleZone ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSNudge, &TNudge ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSDoor, &TDoor ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSRoom, &TRoom ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSDecoration, &TDecoration ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSCeiling, &TCeiling ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSFloor, &TFloor,sizeof(OBJUniformBlock) },
-            new OBJStruct{ &DSSkyBox, &TskyBox ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSPoolTable, &TPoolTable ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSSnackMachine, &TSnackMachine ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSWorldFloor, &TWorldFloor ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSBanner, &TBanner ,sizeof(OBJUniformBlock)},
-            new OBJStruct{ &DSPongR, &TWhite ,sizeof(PongUniformBlock)},
-            new OBJStruct{ &DSPongL, &TWhite ,sizeof(PongUniformBlock)},
-            new OBJStruct{ &DSPongBall, &TWhite ,sizeof(PongUniformBlock)},
-            new OBJStruct{ &DSPongNet, &TWhite ,sizeof(OverlayUniformBlock)},
-            new OBJStruct{ &DSPopup, &TPopup ,sizeof(OverlayUniformBlock)}
+            new OBJStruct{ &DSCabinet1, &TCabinet ,sizeof(OBJUniformBlock),&MCabinet,&POBJ,0},
+            new OBJStruct{ &DSCabinet2, &TCabinet ,sizeof(OBJUniformBlock),&MCabinet,&POBJ,0},
+            new OBJStruct{ &DSAsteroids, &TAsteroids,sizeof(OBJUniformBlock) ,&MAsteroids,&POBJ,0},
+            new OBJStruct{ &DSDanceDance, &TDanceDance ,sizeof(OBJUniformBlock) ,&MDanceDance,&POBJ,0},
+            new OBJStruct{ &DSBattleZone, &TBattleZone ,sizeof(OBJUniformBlock) ,&MBattleZone,&POBJ,0},
+            new OBJStruct{ &DSNudge, &TNudge ,sizeof(OBJUniformBlock) ,&MNudge,&POBJ,0},
+            new OBJStruct{ &DSDoor, &TDoor ,sizeof(OBJUniformBlock) ,&MDoor,&POBJ,0},
+            new OBJStruct{ &DSDecoration, &TDecoration ,sizeof(OBJUniformBlock) ,&MDecoration,&POBJ,0},
+            new OBJStruct{ &DSCeiling, &TCeiling ,sizeof(OBJUniformBlock) ,&MCeiling,&POBJ,0},
+            new OBJStruct{ &DSPoolTable, &TPoolTable ,sizeof(OBJUniformBlock) ,&MPoolTable,&POBJ,0},
+            new OBJStruct{ &DSSnackMachine, &TSnackMachine ,sizeof(OBJUniformBlock) ,&MSnackMachine,&POBJ,0},
+            new OBJStruct{ &DSWorldFloor, &TWorldFloor ,sizeof(OBJUniformBlock) ,&MWorldFloor,&POBJ,0},
+            new OBJStruct{ &DSBanner, &TBanner ,sizeof(OBJUniformBlock) ,&MBanner,&POBJ,0},
+            new OBJStruct{ &DSSkyBox, &TskyBox ,sizeof(OBJUniformBlock) ,&MSkyBox,&PSkyBox,0},
+            new OBJStruct{ &DSRoom, &TRoom ,sizeof(OBJUniformBlock) ,&MRoom,&PRoom,0},
+            new OBJStruct{ &DSFloor, &TFloor,sizeof(OBJUniformBlock)  ,&MFloor,&PFloor,0}
+
+    };
+
+    std::vector<PongStruct*> PongObjects = {
+            new PongStruct{ &DSPongR, &TWhite ,sizeof(PongUniformBlock),&MPongR,&PPong,1},
+            new PongStruct{ &DSPongL, &TWhite ,sizeof(PongUniformBlock),&MPongL,&PPong,1},
+            new PongStruct{ &DSPongBall, &TWhite ,sizeof(PongUniformBlock),&MPongBall,&PPong,1},
+            new PongStruct{ &DSPongNet, &TWhite ,sizeof(OverlayUniformBlock), &MPongNet, &PPong,1},
+            new PongStruct{ &DSPopup, &TPopup ,sizeof(OverlayUniformBlock), &MPopup,&POverlay, 0}
 
     };
 
@@ -283,14 +294,6 @@ protected:
 					 sizeof(glm::vec2), UV}
 			});
 
-		VSimple.init(this, {
-				  {0, sizeof(VertexSimple), VK_VERTEX_INPUT_RATE_VERTEX}
-			}, {
-			  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSimple, pos),
-					 sizeof(glm::vec3), POSITION},
-			  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexSimple, UV),
-					 sizeof(glm::vec2), UV}
-			});
 
 		// Pipelines [Shader couples]
 		// The second parameter is the pointer to the vertex definition
@@ -301,7 +304,6 @@ protected:
         PSkyBox.init(this, &VOBJ, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo,&DSLOBJ });
         PSkyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
-		PSimple.init(this, &VSimple, "shaders/ShaderVertSimple.spv", "shaders/ShaderFragSimple.spv", { &DSLOBJ });
 		PRoom.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo,&DSLOBJ });
 
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOBJ });
@@ -322,8 +324,7 @@ protected:
 		// The second parameter is the pointer to the vertex definition for this model
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		MCabinet1.init(this, &VOBJ, "Models/Cabinet.obj", OBJ);
-		MCabinet2.init(this, &VOBJ, "Models/Cabinet.obj", OBJ);
+		MCabinet.init(this, &VOBJ, "Models/Cabinet.obj", OBJ);
 		MAsteroids.init(this, &VOBJ, "Models/Asteroids.obj", OBJ);
 		MDanceDance.init(this, &VOBJ, "Models/DanceDance.obj", OBJ);
 		MBattleZone.init(this, &VOBJ, "Models/BattleZone.obj", OBJ);
@@ -465,6 +466,12 @@ protected:
             });
         }
 
+        for (size_t i = 0; i < PongObjects.size(); i++) {
+            PongObjects[i]->DS->init(this, &DSLOBJ, {
+                    {0, UNIFORM, PongObjects[i]->s, nullptr},
+                    {1, TEXTURE, 0, (PongObjects[i]->T)}
+            });
+        }
         DSPoolLamp.init(this, &DSLAdvanced, {
                 {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TPoolLamp},
@@ -574,15 +581,20 @@ protected:
 			// the second parameter is the number of indexes to be drawn. For a Model object,
 			// this can be retrieved with the .indices.size() method.
 
-
-			MCabinet1.bind(commandBuffer);
-			DSCabinet.bind(commandBuffer, POBJ, 1, currentImage);
+            for (size_t i = 0; i < Objects.size() -3; i++) {
+                    Objects[i]->M->bind(commandBuffer);
+                    Objects[i]->DS->bind(commandBuffer,*(Objects[i]->P),1,currentImage);
+                    vkCmdDrawIndexed(commandBuffer,
+                                     static_cast<uint32_t>(Objects[i]->M->indices.size()), 1, 0, 0, 0);
+                }
+            /*
+			MCabinet.bind(commandBuffer);
+			DSCabinet1.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCabinet1.indices.size()), 1, 0, 0, 0);
-			MCabinet2.bind(commandBuffer);
+				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
 			DSCabinet2.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCabinet2.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
 			MAsteroids.bind(commandBuffer);
 			DSAsteroids.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
@@ -636,29 +648,36 @@ protected:
 			DSWorldFloor.bind(commandBuffer, POBJ, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MWorldFloor.indices.size()), 1, 0, 0, 0);
-
+             */
+            //Room
 			PRoom.bind(commandBuffer);
 
 			MRoom.bind(commandBuffer);
 			DSRoom.bind(commandBuffer, PRoom, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
+            //Floor
+            PFloor.bind(commandBuffer);
 
-			PSimple.bind(commandBuffer);
+            MFloor.bind(commandBuffer);
+            DSFloor.bind(commandBuffer, PFloor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer,
+                             static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
 
+            //SkyBox
 			DSGubo.bind(commandBuffer, PSkyBox, 0, currentImage);
             PSkyBox.bind(commandBuffer);
             MSkyBox.bind(commandBuffer);
 			DSSkyBox.bind(commandBuffer, PSkyBox, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MSkyBox.indices.size()), 1, 0, 0, 0);
-
+            //Overlay
 			POverlay.bind(commandBuffer);
 			MPopup.bind(commandBuffer);
 			DSPopup.bind(commandBuffer, POverlay, 0, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPopup.indices.size()), 1, 0, 0, 0);
-
+            //Emi
 			PEmi.bind(commandBuffer);
 			DSGubo.bind(commandBuffer, PEmi, 0, currentImage);
 			MPoolLamp.bind(commandBuffer);
@@ -685,17 +704,19 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MLantern.indices.size()), 1, 0, 0, 0);
 
-			PFloor.bind(commandBuffer);
 
-			MFloor.bind(commandBuffer);
-			DSFloor.bind(commandBuffer, PFloor, 1, currentImage);
-			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
 
 			break;
 		case 1:
 			PPong.bind(commandBuffer);
-			
+
+                for (size_t i = 0; i < PongObjects.size() -1; i++) {
+                    PongObjects[i]->M->bind(commandBuffer);
+                    PongObjects[i]->DS->bind(commandBuffer,*(PongObjects[i]->P),0,currentImage);
+                    vkCmdDrawIndexed(commandBuffer,
+                                     static_cast<uint32_t>(PongObjects[i]->M->indices.size()), 1, 0, 0, 0);
+                }
+            /*
 			MPongR.bind(commandBuffer);
 
 			DSPongR.bind(commandBuffer, PPong, 0, currentImage);
@@ -713,7 +734,7 @@ protected:
 			DSPongBall.bind(commandBuffer, PPong, 0, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPongBall.indices.size()), 1, 0, 0, 0);
-
+            */
 			POverlay.bind(commandBuffer);
 			MPongNet.bind(commandBuffer);
 
@@ -979,7 +1000,7 @@ protected:
 			uboCabinet1.mvpMat = Prj * View * World;
 			uboCabinet1.mMat = World;
 			uboCabinet1.nMat = glm::inverse(glm::transpose(World));
-			DSCabinet.map(currentImage, &uboCabinet1, sizeof(uboCabinet1), 0);
+			DSCabinet1.map(currentImage, &uboCabinet1, sizeof(uboCabinet1), 0);
 
 			World = glm::translate(glm::mat4(1.0), glm::vec3(0.1, 0.0f, -9.2f)) *
 				glm::scale(glm::mat4(1), glm::vec3(0.018f));
