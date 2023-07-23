@@ -417,7 +417,7 @@ protected:
         TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
         TDoor.init(this,"textures/door.jpeg");
 		TBanner.init(this, "textures/DarkGrey.png");
-		TWorldFloor.init(this, "textures/lightGreen.jpg");
+		TWorldFloor.init(this, "textures/asphalt.jpg");
 		TWhite.init(this, "textures/white.png");
 
 		TPopup.init(this, "textures/PressP.png");
