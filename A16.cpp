@@ -72,6 +72,12 @@ struct VertexSimple {
 	glm::vec2 UV;
 };
 
+struct OBJStruct{
+    DescriptorSet *DS;
+    Texture *T;
+    int s ;
+};
+
 class A16;
 void GameLogic(A16* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World,glm::mat3 &CamDir);
 void ballBounce();
@@ -137,7 +143,33 @@ protected:
             &TDanceDance,&TBattleZone,&TNudge,&TSnackMachine,&TPoolTable,
             &TDoor,&TBanner,&TPopup,&TWorldFloor };
 
-	// C++ storage for uniform variables
+    std::vector<OBJStruct*> Objects = {
+            new OBJStruct{ &DSCabinet, &TCabinet ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSCabinet2, &TCabinet ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSAsteroids, &TAsteroids,sizeof(OBJUniformBlock) },
+            new OBJStruct{ &DSDanceDance, &TDanceDance ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSBattleZone, &TBattleZone ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSNudge, &TNudge ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSDoor, &TDoor ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSRoom, &TRoom ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSDecoration, &TDecoration ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSCeiling, &TCeiling ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSFloor, &TFloor,sizeof(OBJUniformBlock) },
+            new OBJStruct{ &DSSkyBox, &TskyBox ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSPoolTable, &TPoolTable ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSSnackMachine, &TSnackMachine ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSWorldFloor, &TWorldFloor ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSBanner, &TBanner ,sizeof(OBJUniformBlock)},
+            new OBJStruct{ &DSPongR, &TWhite ,sizeof(PongUniformBlock)},
+            new OBJStruct{ &DSPongL, &TWhite ,sizeof(PongUniformBlock)},
+            new OBJStruct{ &DSPongBall, &TWhite ,sizeof(PongUniformBlock)},
+            new OBJStruct{ &DSPongNet, &TWhite ,sizeof(OverlayUniformBlock)},
+            new OBJStruct{ &DSPopup, &TPopup ,sizeof(OverlayUniformBlock)}
+
+    };
+
+
+    // C++ storage for uniform variables
 	OBJUniformBlock uboCabinet1,uboCabinet2, uboAsteroids, uboRoom,
                      uboDecoration, uboCeiling, uboFloor, uboCeilingLamp1,
                      uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
@@ -420,109 +452,12 @@ protected:
         }
 
 		// Here you define the data set
-		DSCabinet.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCabinet}
-		});
-
-        DSCabinet2.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-            {1, TEXTURE, 0, &TCabinet}
-        });
-
-        DSAsteroids.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-            {1, TEXTURE, 0, &TAsteroids}
-        });
-
-        DSDanceDance.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-            {1, TEXTURE, 0, &TDanceDance}
-        });
-        DSBattleZone.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-            {1, TEXTURE, 0, &TBattleZone}
-        });
-
-        DSNudge.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-            {1, TEXTURE, 0, &TNudge}
-        });
-
-        DSDoor.init(this, &DSLOBJ, {
-            {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-            {1, TEXTURE, 0, &TDoor}
-        });
-		
-		DSRoom.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TRoom},
-		});
-
-		DSDecoration.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TDecoration},
-		});
-
-		DSCeiling.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCeiling}
-		});
-
-		DSFloor.init(this, &DSLOBJ, {
-			{0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TFloor}
-		});
-
-        DSSkyBox.init(this, &DSLOBJ, {
-            {0,UNIFORM,sizeof(OBJUniformBlock), nullptr},
-            {1, TEXTURE, 0, &TskyBox}
-        });
-
-		DSPoolTable.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TPoolTable}
-		});
-
-		DSSnackMachine.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TSnackMachine}
-		});
-
-        DSWorldFloor.init(this, &DSLOBJ, {
-                {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TWorldFloor}
-        });
-
-		DSBanner.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TBanner}
-			});
-
-		DSPongR.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TWhite}
-		});
-
-		DSPongL.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TWhite}
-		});
-
-		DSPongBall.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(PongUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TWhite}
-		});
-
-		DSPongNet.init(this, &DSLOBJ, {
-			{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TWhite}
-		});
-
-        DSPopup.init(this, &DSLOBJ, {
-                {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TPopup}
-        });
+        for (size_t i = 0; i < Objects.size(); i++) {
+            Objects[i]->DS->init(this, &DSLOBJ, {
+                    {0, UNIFORM, Objects[i]->s, nullptr},
+                    {1, TEXTURE, 0, (Objects[i]->T)}
+            });
+        }
 
         DSPoolLamp.init(this, &DSLAdvanced, {
                 {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
