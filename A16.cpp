@@ -1,8 +1,6 @@
 // This has been adapted from the Vulkan tutorial
 
 #include "Starter.hpp"
-#include <cstdlib>
-#include <ctime>
 
 // The uniform buffer objects data structures
 // Remember to use the correct alignas(...) value
@@ -221,6 +219,8 @@ protected:
 	float gravity = 9.8f;           // Acceleration due to gravity
 	float maxJumpTime = 1.3f;       // Maximum duration of the jump
 	float jumpTime = 0.0f;          // Current time elapsed during the jump
+
+	using Clock = std::chrono::high_resolution_clock;
 
 	// Here you set the main application parameters
 	void setWindowParameters() {
@@ -851,6 +851,27 @@ protected:
 		}
 	}
 
+	float getFPS() {
+		// Frame timing variables
+		static int frameCount = 0;
+		static float fps = 0.0f;
+		static auto prevFrameTime = Clock::now();
+
+		// Start timing the frame
+		auto frameStart = Clock::now();
+
+		// Calculate fps
+		frameCount++;
+		auto frameTime = std::chrono::duration<float, std::chrono::seconds::period>(frameStart - prevFrameTime).count();
+		if (frameTime >= 1.0f) {
+			fps = static_cast<float>(frameCount) / frameTime;
+			frameCount = 0;
+			prevFrameTime = frameStart;
+		}
+
+		return fps;
+	}
+
 	// Here is where you update the uniforms.
 	// Very likely this will be where you will be writing the logic of your application.
 	void updateUniformBuffer(uint32_t currentImage) {
@@ -859,6 +880,9 @@ protected:
 		bool rangeVideogame = Pos[0].x < 5.5f && Pos[0].x > 0.0f && Pos[0].z < 0.0f && Pos[0].z > -2.5f;
 
 		if (glfwGetKey(window, GLFW_KEY_P) && currScene == 0 && rangeVideogame || glfwGetKey(window, GLFW_KEY_P) && currScene == 1) {
+
+			std::cout << "Scene : " << getFPS() << "\n";
+
 			if (!debounce) {
 				debounce = true;
 				curDebounce = GLFW_KEY_SPACE;
