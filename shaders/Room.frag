@@ -38,15 +38,7 @@ layout(set = 1, binding = 1) uniform sampler2D tex;
 //beta = decay factor. Beta = 0 --> constant, beta = 1 --> inverse linear, beta = 2 --> inverse squared
 //g alto = molto forte
 const float beta = 1.0f;
-const float g = 1.5f;
-
-//spot light parameters
-const float betaS = 2.0f;
-const float gS = 4.0;
-//cosin --> inner diameter
-//cosout --> decay
-const float cosout = 0.85;
-const float cosin  = 0.98;
+const float g = 1.0f;
 
 vec3 BRDFCG(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float roughness) {
 	//vec3 V  - direction of the viewer
@@ -61,19 +53,16 @@ vec3 BRDFCG(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float rou
 
 	vec3 h = normalize(L + V);
 	float LdotN = max(0.00001f, dot(L, N));
-	float VdotN = max(0.00001f, dot(L, N));
-	float hdotN = max(0.00001f, dot(L, N));
-	float hdotV = max(0.00001f, dot(L, N));
+	float VdotN = max(0.00001f, dot(V, N));
+	float hdotN = max(0.00001f, dot(h, N));
+	float hdotV = max(0.00001f, dot(h, V));
 
 	float k = 1.0f - metallic;
-	vec3 Ms = vec3(1.0f);
-	
+	vec3 Ms = ubo.sColor;
 	float gNV = 2.0 / (1.0 + sqrt(1.0 + pow(roughness, 2.0) * (1.0 - pow(VdotN, 2.0)) / (pow(VdotN, 2.0))));
 	float gNL = 2.0 / (1.0 + sqrt(1.0 + pow(roughness, 2.0) * (1.0 - pow(LdotN, 2.0)) / (pow(LdotN, 2.0))));
 	float G = gNV * gNL;
-
 	float D = pow(roughness, 2.0)/(radians(180) * pow((pow(clamp(hdotN, 0.0, 1.0), 2.0) * (pow(roughness, 2.0) - 1.0) + 1.0), 2.0));
-
 	float F = F0 + (1.0 - F0) * pow((1.0 - clamp(hdotV, 0.0, 1.0)), 5.0);
 
 	vec3 specular = Ms * D * F * G / (4.0 * clamp(VdotN, 0.0, 1.0));
@@ -85,43 +74,37 @@ vec3 BRDFCG(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float rou
 }
 
 void main() {
-	vec3 norm = normalize(fragNorm);                // surface normal
-	vec3 eyeDir = normalize(gubo.eyePos - fragPos);    // viewer direction
-	vec3 lightDir = normalize(gubo.DlightDir);            // light direction
-
-	// Calculate the directional light contribution
-	vec3 directLight = gubo.DlightColor * max(dot(norm, lightDir), 0.0);
-
-	// Calculate the point light contribution
+	vec3 norm = normalize(fragNorm);                	// surface normal
+	vec3 eyeDir = normalize(gubo.eyePos - fragPos);     // viewer direction
+	vec3 lightDir = normalize(gubo.DlightDir);          // light direction
 
 	//PL1
 	//light model
 	vec3 pLightDir = normalize(gubo.PLightPos - fragPos);
 	vec3 pointLightColor = gubo.PLightColor.rgb * pow(g / length(gubo.PLightPos - fragPos), beta);
 
-	vec3 pDiffSpec1 = BRDFCG(eyeDir, norm, pLightDir, texture(tex, fragUV).rgb, 1.0f, 0.5f, 0.67f);
-	vec3 Ambient = texture(tex, fragUV).rgb * 0.05f;
-	vec4 outColorPL = vec4(clamp((pDiffSpec1) * pointLightColor.rgb + Ambient,0.0,1.0), 1.0f);
+	vec3 pDiffSpec1 = BRDFCG(eyeDir, norm, pLightDir, texture(tex, fragUV).rgb, 1.0f, 0.6f, 0.67f);
+	vec4 outColorPL = vec4(pDiffSpec1 * pointLightColor.rgb, 1.0f);
 
 	//PL2
 	//light model
 	vec3 pLightDir2 = normalize(gubo.PLightPos2 - fragPos);
 	vec3 pointLightColor2 = gubo.PLightColor2.rgb * pow(g / length(gubo.PLightPos2 - fragPos), beta);
 
-	vec3 pDiffSpec2 = BRDFCG(eyeDir, norm, pLightDir, texture(tex, fragUV).rgb, 1.0f, 0.9f, 0.45f);
-	vec4 outColorPL2 = vec4(clamp((pDiffSpec2) * pointLightColor2.rgb + Ambient,0.0,1.0), 1.0f);
+	vec3 pDiffSpec2 = BRDFCG(eyeDir, norm, pLightDir2, texture(tex, fragUV).rgb, 1.0f, 0.6f, 0.67f);
+	vec4 outColorPL2 = vec4(pDiffSpec2 * pointLightColor2.rgb, 1.0f);
 
-	//Ambient
-	vec3 albedo = texture(tex, fragUV).rgb;        // main color
-	vec3 MD = albedo;
-	vec3 MS = ubo.sColor;
+	//ambient
+	//MA è la BRDF di ambient, che è costante per la ambient. Generalemente MA è il main color dell'oggetto
+	//noi gli passiamo ubo.amb per fare tooning del maincolor dell'oggetto
+	//ubo.amb 
+
+	vec3 albedo = texture(tex, fragUV).rgb;		// main color
 	vec3 MA = albedo * ubo.amb;
 	vec3 LA = gubo.AmbLightColor;
-
-	// Write the shader here
-
-	// Combine the lighting contributions
-	vec3 finalColor = MD * (directLight) + LA * MA;
 	
-	outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0) + outColorPL + outColorPL2;   // output color
+	vec4 outAmbient = vec4(LA * MA, 1.0f);
+
+	// output color
+	outColor = clamp(outAmbient + outColorPL + outColorPL2, 0.0f, 1.0f);   
 }

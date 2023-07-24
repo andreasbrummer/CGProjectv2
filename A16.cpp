@@ -347,15 +347,10 @@ protected:
 		MPopup.indices = { 0, 1, 2,    1, 2, 3 };
 		MPopup.initMesh(this, &VOverlay);
 
-		
-
-
 		MPongR.vertices = { {{xURR, yURR}, {0.8f,0.0f}}, {{xURR - pongWidth, yURR}, {0.0f,1.0f}},
 						 {{xURR, yURR + pongLength}, {1.0f,0.0f}}, {{xURR - pongWidth, yURR + pongLength}, {1.0f,1.0f}} };
 		MPongR.indices = { 0, 1, 2, 1,2,3 };
 		MPongR.initMesh(this, &VOverlay);
-
-		
 
 		MPongL.vertices = { {{xULL, yULL}, {0.8f,0.0f}}, {{xULL + pongWidth, yULL}, {0.0f,1.0f}},
 						 {{xULL, yULL + pongLength}, {1.0f,0.0f}}, {{xULL + pongWidth, yULL + pongLength}, {1.0f,1.0f}} };
@@ -913,14 +908,16 @@ protected:
 		
 		GameLogic();
 		
-		gubo.DlightDir = glm::normalize(glm::vec3(0, 3, -3));
-		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.DlightDir = glm::normalize(glm::vec3(3.0f, 0.0f, 0));
+		gubo.DlightColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+		//gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
 		gubo.eyePos = Pos[currScene];
 		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
 		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		//gubo.PLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
+		//gubo.PLightPos2 = glm::vec3(6.0f, 2.0f, 2.0f);
 		gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 		//gubo.PLightColor2 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
