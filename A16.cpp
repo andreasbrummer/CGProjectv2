@@ -86,11 +86,11 @@ struct PongStruct{
     int currScene;
 };
 
-class A16;
-void GameLogic(A16* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World,glm::mat3 &CamDir);
+class SpaceArcade;
+void GameLogic(SpaceArcade* A, float Ar, glm::mat4& View, glm::mat4& Prj, glm::mat4& World,glm::mat3 &CamDir);
 void ballBounce();
 
-class A16 : public BaseProject {
+class SpaceArcade : public BaseProject {
 protected:
 	// Current aspect ratio (used by the callback that resized the window
 	float Ar;
@@ -1128,7 +1128,7 @@ protected:
 
 // This is the main: probably you do not need to touch this!
 int main() {
-	A16 app;
+	SpaceArcade app;
 
 	try {
 		app.run();
