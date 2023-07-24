@@ -115,8 +115,9 @@ protected:
 
     std::vector<Model<VertexOBJ>*> objModels = {
         &MCabinet, &MAsteroids, &MRoom, &MDecoration, &MCeiling,
-        &MFloor, &MDanceDance, &MBattleZone, &MNudge, &MSnackMachine, &MCeilingLamp1,
-        &MCeilingLamp2, &MPoolLamp, &MPoolTable, &MDoor, &MSkyBox, &MBanner, &MWorldFloor
+        &MFloor, &MDanceDance, &MBattleZone, &MNudge, &MSnackMachine,
+        &MCeilingLamp1, &MCeilingLamp2, &MPoolLamp, &MPoolTable, &MDoor,
+        &MSkyBox, &MBanner, &MWorldFloor, &MLantern
     };
 
     std::vector<Model<VertexOverlay>*> overlayModels = {
@@ -135,7 +136,8 @@ protected:
         &DSCeilingLamp2, &DSPoolLamp, &DSPoolTable, &DSSnackMachine,
         &DSDanceDance, &DSBattleZone, &DSNudge, &DSRoom, &DSDecoration,
         &DSCeiling, &DSFloor, &DSskyBox, &DSDoor, &DSSkyBox, &DSBanner,
-        &DSWorldFloor, &DSPongR, &DSPongL, &DSPongBall, &DSPongNet, &DSPopup
+        &DSWorldFloor, &DSPongR, &DSPongL, &DSPongBall, &DSPongNet, &DSPopup,
+        &DSJLantern1, &DSJLantern2
     };
 
     Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor, TAsteroids,
@@ -147,7 +149,8 @@ protected:
         &TCabinet, &TRoom, &TDecoration, &TCeiling, &TFloor, &TWhite,
         &TPoolLamp, &TPoolLampEmi, &TForniture, &TAsteroids, &TskyBox,
         &TDanceDance, &TBattleZone, &TNudge, &TSnackMachine, &TPoolTable,
-        &TDoor, &TBanner, &TPopup, &TWorldFloor, &TPongCabinetEmi 
+        &TDoor, &TBanner, &TPopup, &TWorldFloor, &TPongCabinetEmi , &TLanternEmi,
+        &TLanternColor
 	};
 
     std::vector<OBJStruct*> Objects = {
@@ -331,7 +334,7 @@ protected:
 		MSnackMachine.init(this, &VOBJ, "Models/NukaCola.obj", OBJ);
 		MSkyBox.init(this, &VOBJ, "Models/SkyBoxCube.obj", OBJ);
 		MDoor.init(this, &VOBJ, "Models/shutterDoor.obj", OBJ);
-		MBanner.init(this, &VOBJ, "Models/insegna.obj", OBJ);
+		MBanner.init(this, &VOBJ, "Models/Insegna.obj", OBJ);
 		MWorldFloor.init(this, &VOBJ, "Models/WorldFloor.obj", OBJ);
 		MLantern.init(this, &VOBJ, "Models/japaneseLantern.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
