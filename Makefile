@@ -5,17 +5,17 @@ TINYGLTF_INCLUDE_PATH = /home/andreas/Desktop/CGProjectv2/headers
 CFLAGS = -std=c++17 -O2 -I$(STB_INCLUDE_PATH) -I$(TINYOBJ_INCLUDE_PATH) -I$(TINYGLTF_INCLUDE_PATH) -I./models
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 
-A16: A16.o
-	g++ $(CFLAGS) -o A16 A16.o $(LDFLAGS)
+SpaceArcade: SpaceArcade.o
+	g++ $(CFLAGS) -o SpaceArcade SpaceArcade.o $(LDFLAGS)
 
-A16.o: A16.cpp Starter.hpp  
-	g++ $(CFLAGS) -c A16.cpp -o A16.o
+SpaceArcade.o: SpaceArcade.cpp Starter.hpp  
+	g++ $(CFLAGS) -c SpaceArcade.cpp -o SpaceArcade.o
 
 .PHONY: test clean
 
-test: A16
-	./A16
+test: SpaceArcade
+	./SpaceArcade
 
 clean:
-	rm -f A16 A16.o
+	rm -f SpaceArcade SpaceArcade.o
 

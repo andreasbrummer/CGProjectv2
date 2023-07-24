@@ -321,7 +321,7 @@ protected:
 		MDefender.init(this, &VOBJ, "Assets/DefenderCabinet/DefenderCabinet.obj", OBJ);
 		MAsteroids.init(this, &VOBJ, "Assets/AsteroidsCabinet/AsteroidsCabinet.obj", OBJ);
 		MDanceDance.init(this, &VOBJ, "Assets/DanceDanceCabinet/DanceDanceCabinet.obj", OBJ);
-		MBattleZone.init(this, &VOBJ, "Assets/BattlezoneCabinet/BattlezoneCabinet.obj", OBJ);
+		MBattleZone.init(this, &VOBJ, "Assets/BattleZoneCabinet/BattleZoneCabinet.obj", OBJ);
 		MNudge.init(this, &VOBJ, "Assets/NudgeCabinet/NudgeCabinet.obj", OBJ);
 		MRoom.init(this, &VOBJ, "Assets/Room/Room.obj", OBJ);
 		MCeiling.init(this, &VOBJ, "Assets/Ceiling/Ceiling.obj", OBJ);
@@ -407,14 +407,14 @@ protected:
 		TDefender.init(this, "Assets/DefenderCabinet/Textures/DefenderTexture.png");
 		TPongCabinetEmi.init(this, "Assets/DefenderCabinet/Textures/PongEmit.png");
 		TRoom.init(this, "Assets/Room/Textures/ArcadeWalls.jpg");
-		TDecoration.init(this, "Assets/Decoration/Texture/TextureDecoration.jpg");
+		TDecoration.init(this, "Assets/Decoration/Textures/TextureDecoration.jpg");
 		TCeiling.init(this, "Assets/Ceiling/Textures/Ceiling.png");
 		TFloor.init(this, "Assets/Floor/Textures/WoodFloor.jpg");
 		TPoolLamp.init(this, "Assets/PoolLamp/Textures/TexturesCity.png");
 		TPoolLampEmi.init(this, "Assets/PoolLamp/Textures/TexturesCityEmission.png");
         TAsteroids.init(this,"Assets/AsteroidsCabinet/Textures/Material.001_baseColor.png");
         TDanceDance.init(this,"Assets/DanceDanceCabinet/Textures/lambert3_baseColor.png");
-        TBattleZone.init(this,"Assets/BattlezoneCabinet/Textures/Material.001_baseColor.png");
+        TBattleZone.init(this,"Assets/BattleZoneCabinet/Textures/Material.001_baseColor.png");
         TNudge.init(this,"Assets/NudgeCabinet/Textures/Material.002_albedo.jpg");
         TSnackMachine.init(this,"Assets/SnackMachine/Textures/albedo.jpg");
         TPoolTable.init(this, "Assets/PoolTable/Textures/pooltablelow_POOL_TABLE_BaseColor.png");
