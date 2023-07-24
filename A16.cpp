@@ -47,6 +47,11 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec3 SLightPos;
 	alignas(16) glm::vec3 SLightDir;
 	alignas(16) glm::vec4 SLightColor;
+
+	alignas(16) glm::vec3 PLightPosLantern1;
+	alignas(16) glm::vec4 PLightColorLantern1;
+	alignas(16) glm::vec3 PLightPosLantern2;
+	alignas(16) glm::vec4 PLightColorLantern2;
 };
 
 struct SkyboxUniformBufferObject {
@@ -957,8 +962,7 @@ protected:
 		GameLogic();
 		
 		gubo.DlightDir = glm::normalize(glm::vec3(3.0f, 0.0f, 0));
-		gubo.DlightColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-		//gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.AmbLightColor = glm::vec3(0.05f); //0.05f
 		gubo.eyePos = Pos[currScene];
 		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
@@ -972,6 +976,12 @@ protected:
 		//gubo.SLightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		gubo.SLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.SLightPos = glm::vec3(10.0f, 3.0f, 1.0f);
+
+		gubo.PLightPosLantern1 = glm::vec3(13.0f, 2.8f, -13.0f);
+		//gubo.PLightColorLantern1 = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		gubo.PLightColorLantern1 = glm::vec4(1.0f, 0.2f, 0.0f, 1.0f);
+		gubo.PLightPosLantern2 = glm::vec3(8.3f, 2.8f, -13.0f);
+		gubo.PLightColorLantern2 = glm::vec4(1.0f, 0.2f, 0.0f, 1.0f);
 
 		switch (currScene) {
 		case 0:

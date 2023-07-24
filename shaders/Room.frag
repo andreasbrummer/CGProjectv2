@@ -12,15 +12,20 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
 	vec3 DlightColor;    // color of the direct light
 	vec3 AmbLightColor;    // ambient light
 	vec3 eyePos;        // position of the viewer
+
 	vec3 PLightPos;
 	vec4 PLightColor;
-
 	vec3 PLightPos2;
 	vec4 PLightColor2;
 
 	vec3 SLightPos;
 	vec3 SLightDir;
 	vec4 SLightColor;
+
+	vec3 PLightPosLantern1;
+	vec4 PLightColorLantern1;
+	vec3 PLightPosLantern2;
+	vec4 PLightColorLantern2;
 } gubo;
 
 layout(set = 1, binding = 0) uniform UniformBufferObject {
@@ -39,6 +44,9 @@ layout(set = 1, binding = 1) uniform sampler2D tex;
 //g alto = molto forte
 const float beta = 1.0f;
 const float g = 1.0f;
+
+const float betaLantern = 5.0f;
+const float gLantern = 4.0f;
 
 vec3 BRDFCG(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float roughness) {
 	//vec3 V  - direction of the viewer
@@ -84,7 +92,7 @@ void main() {
 	vec3 pointLightColor = gubo.PLightColor.rgb * pow(g / length(gubo.PLightPos - fragPos), beta);
 
 	vec3 pDiffSpec1 = BRDFCG(eyeDir, norm, pLightDir, texture(tex, fragUV).rgb, 1.0f, 0.6f, 0.67f);
-	vec4 outColorPL = vec4(pDiffSpec1 * pointLightColor.rgb, 1.0f);
+	vec4 outColorP1 = vec4(pDiffSpec1 * pointLightColor.rgb, 1.0f);
 
 	//PL2
 	//light model
@@ -92,7 +100,27 @@ void main() {
 	vec3 pointLightColor2 = gubo.PLightColor2.rgb * pow(g / length(gubo.PLightPos2 - fragPos), beta);
 
 	vec3 pDiffSpec2 = BRDFCG(eyeDir, norm, pLightDir2, texture(tex, fragUV).rgb, 1.0f, 0.6f, 0.67f);
-	vec4 outColorPL2 = vec4(pDiffSpec2 * pointLightColor2.rgb, 1.0f);
+	vec4 outColorP2 = vec4(pDiffSpec2 * pointLightColor2.rgb, 1.0f);
+
+	//Lantern1
+
+	//light model
+	vec3 pLightDirL1 = normalize(gubo.PLightPosLantern1 - fragPos);
+	vec3 pointLightColorL1 = gubo.PLightColorLantern1.rgb * pow(gLantern / length(gubo.PLightPosLantern1 - fragPos), betaLantern);
+
+	//vec3 pDiffSpec2 = BRDFLB(eyeDir, norm, pLightDir2, texture(tex, fragUV).rgb, ubo.sColor, ubo.gamma);
+	vec3 pDiffSpecL1 = BRDFCG(eyeDir, norm, pLightDirL1, texture(tex, fragUV).rgb, 1.0f, 0.6f, 0.67f);
+	vec4 outColorPL1 = vec4(pDiffSpecL1 * pointLightColorL1.rgb, 1.0f);
+
+	//Lantern2
+
+	//light model
+	vec3 pLightDirL2 = normalize(gubo.PLightPosLantern2 - fragPos);
+	vec3 pointLightColorL2 = gubo.PLightColorLantern2.rgb * pow(gLantern / length(gubo.PLightPosLantern2 - fragPos), betaLantern);
+
+	//vec3 pDiffSpec2 = BRDFLB(eyeDir, norm, pLightDir2, texture(tex, fragUV).rgb, ubo.sColor, ubo.gamma);
+	vec3 pDiffSpecL2 = BRDFCG(eyeDir, norm, pLightDirL2, texture(tex, fragUV).rgb, 1.0f, 0.6f, 0.67f);
+	vec4 outColorPL2 = vec4(pDiffSpecL2 * pointLightColorL2.rgb, 1.0f);
 
 	//ambient
 	//MA è la BRDF di ambient, che è costante per la ambient. Generalemente MA è il main color dell'oggetto
@@ -106,5 +134,5 @@ void main() {
 	vec4 outAmbient = vec4(LA * MA, 1.0f);
 
 	// output color
-	outColor = clamp(outAmbient + outColorPL + outColorPL2, 0.0f, 1.0f);   
+	outColor = clamp(outAmbient + outColorP1 + outColorP2 + outColorPL1 + outColorPL2, 0.0f, 1.0f);   
 }
