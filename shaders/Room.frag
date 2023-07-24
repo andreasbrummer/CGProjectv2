@@ -46,7 +46,7 @@ const float beta = 1.0f;
 const float g = 1.0f;
 
 const float betaLantern = 5.0f;
-const float gLantern = 4.0f;
+const float gLantern = 3.0f;
 
 vec3 BRDFCG(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float roughness) {
 	//vec3 V  - direction of the viewer

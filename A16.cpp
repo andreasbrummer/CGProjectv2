@@ -149,16 +149,15 @@ protected:
     Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor,TAsteroids,
             TWhite, TPoolLamp, TPoolLampEmi, TForniture, TskyBox,
             TDanceDance,TBattleZone,TNudge,TSnackMachine, TPoolTable,TDoor,
-			TBanner,TWorldFloor,TPopup,TLanternColor,TLanternEmi;
+			TBanner,TWorldFloor,TPopup,TLanternColor,TLanternEmi,TPongCabinetEmi;
 
     std::vector<Texture*> textures = {
             &TCabinet,&TRoom,&TDecoration,&TCeiling,&TFloor,&TWhite,
             &TPoolLamp,&TPoolLampEmi,&TForniture,&TAsteroids,&TskyBox,
             &TDanceDance,&TBattleZone,&TNudge,&TSnackMachine,&TPoolTable,
-            &TDoor,&TBanner,&TPopup,&TWorldFloor };
+            &TDoor,&TBanner,&TPopup,&TWorldFloor,&TPongCabinetEmi };
 
     std::vector<OBJStruct*> Objects = {
-            new OBJStruct{ &DSCabinet1, &TCabinet ,sizeof(OBJUniformBlock),&MCabinet,&POBJ,0},
             new OBJStruct{ &DSCabinet2, &TCabinet ,sizeof(OBJUniformBlock),&MCabinet,&POBJ,0},
             new OBJStruct{ &DSAsteroids, &TAsteroids,sizeof(OBJUniformBlock) ,&MAsteroids,&POBJ,0},
             new OBJStruct{ &DSDanceDance, &TDanceDance ,sizeof(OBJUniformBlock) ,&MDanceDance,&POBJ,0},
@@ -170,11 +169,9 @@ protected:
             new OBJStruct{ &DSPoolTable, &TPoolTable ,sizeof(OBJUniformBlock) ,&MPoolTable,&POBJ,0},
             new OBJStruct{ &DSSnackMachine, &TSnackMachine ,sizeof(OBJUniformBlock) ,&MSnackMachine,&POBJ,0},
             new OBJStruct{ &DSWorldFloor, &TWorldFloor ,sizeof(OBJUniformBlock) ,&MWorldFloor,&POBJ,0},
-            new OBJStruct{ &DSBanner, &TBanner ,sizeof(OBJUniformBlock) ,&MBanner,&POBJ,0},
             new OBJStruct{ &DSSkyBox, &TskyBox ,sizeof(OBJUniformBlock) ,&MSkyBox,&PSkyBox,0},
             new OBJStruct{ &DSRoom, &TRoom ,sizeof(OBJUniformBlock) ,&MRoom,&PRoom,0},
-            new OBJStruct{ &DSFloor, &TFloor,sizeof(OBJUniformBlock)  ,&MFloor,&PFloor,0}
-
+            new OBJStruct{ &DSFloor, &TFloor,sizeof(OBJUniformBlock)  ,&MFloor,&PFloor,0},
     };
 
     std::vector<PongStruct*> PongObjects = {
@@ -182,8 +179,7 @@ protected:
             new PongStruct{ &DSPongL, &TWhite ,sizeof(PongUniformBlock),&MPongL,&PPong,1},
             new PongStruct{ &DSPongBall, &TWhite ,sizeof(PongUniformBlock),&MPongBall,&PPong,1},
             new PongStruct{ &DSPongNet, &TWhite ,sizeof(OverlayUniformBlock), &MPongNet, &PPong,1},
-            new PongStruct{ &DSPopup, &TPopup ,sizeof(OverlayUniformBlock), &MPopup,&POverlay, 0}
-
+			new PongStruct{ &DSPopup, &TPopup ,sizeof(OverlayUniformBlock), &MPopup,&POverlay, 0}
     };
 
 
@@ -229,7 +225,7 @@ protected:
 	// Jump parameters
 	bool isJumping = false;         // Flag to indicate if the player is currently jumping
 	float jumpVelocity = 0.0f;      // Initial jump velocity
-	float jumpHeight = 1.3f;        // Height the player can reach during the jump
+	float jumpHeight = 0.6f;        // Height the player can reach during the jump
 	float gravity = 9.8f;           // Acceleration due to gravity
 	float maxJumpTime = 1.3f;       // Maximum duration of the jump
 	float jumpTime = 0.0f;          // Current time elapsed during the jump
@@ -345,7 +341,7 @@ protected:
 		MSnackMachine.init(this, &VOBJ, "Models/NukaCola.obj", OBJ);
 		MSkyBox.init(this, &VOBJ, "Models/SkyBoxCube.obj", OBJ);
 		MDoor.init(this, &VOBJ, "Models/shutterDoor.obj", OBJ);
-		MBanner.init(this, &VOBJ, "Models/Insegna.obj", OBJ);
+		MBanner.init(this, &VOBJ, "Models/insegna.obj", OBJ);
 		MWorldFloor.init(this, &VOBJ, "Models/WorldFloor.obj", OBJ);
 		MLantern.init(this, &VOBJ, "Models/japaneseLantern.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
@@ -437,8 +433,8 @@ protected:
 		TWorldFloor.init(this, "textures/myGrid.png");
 		TWhite.init(this, "textures/white.png");
 		TLanternColor.init(this, "textures/JapaneseLanternTextures/LanternColor.png");
-		TLanternEmi.init(this, "textures/JapaneseLanternTextures/LanternEmi.png");
-
+		TLanternEmi.init(this, "textures/JapaneseLanternTextures/LanternEmiV2.png");
+		TPongCabinetEmi.init(this, "textures/DefenderTextures/PongEmit.png");
 		TPopup.init(this, "textures/PressP.png");
 
 		const char* T2fn[] = { "textures/sky/px.png", "textures/sky/nx.png",
@@ -500,6 +496,18 @@ protected:
 		{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
 		{1, TEXTURE, 0, &TLanternColor},
 		{2,TEXTURE,0,&TLanternEmi}
+			});
+
+		DSBanner.init(this, &DSLAdvanced, {
+		{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
+		{1, TEXTURE, 0, &TBanner},
+		{2,TEXTURE,0,&TLanternEmi} //using the same emission as the japanese lanterns
+			});
+
+		DSCabinet1.init(this, &DSLAdvanced, {
+		{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
+		{1, TEXTURE, 0, &TCabinet},
+		{2,TEXTURE,0,&TPongCabinetEmi} //using the same emission as the japanese lanterns
 			});
 
         DSGubo.init(this, &DSLGubo, {
@@ -704,13 +712,22 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MLantern.indices.size()), 1, 0, 0, 0);
 
+			MBanner.bind(commandBuffer);
+			DSBanner.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
+
+			MCabinet.bind(commandBuffer);
+			DSCabinet1.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
 
 
 			break;
 		case 1:
 			PPong.bind(commandBuffer);
 
-                for (size_t i = 0; i < PongObjects.size() -1; i++) {
+                for (size_t i = 0; i < PongObjects.size() -2; i++) {
                     PongObjects[i]->M->bind(commandBuffer);
                     PongObjects[i]->DS->bind(commandBuffer,*(PongObjects[i]->P),0,currentImage);
                     vkCmdDrawIndexed(commandBuffer,
@@ -737,7 +754,6 @@ protected:
             */
 			POverlay.bind(commandBuffer);
 			MPongNet.bind(commandBuffer);
-
 			DSPongNet.bind(commandBuffer, POverlay, 0, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPongNet.indices.size()), 1, 0, 0, 0);
@@ -1058,8 +1074,9 @@ protected:
 			uboDanceDace.nMat = glm::inverse(glm::transpose(World));
 			DSDanceDance.map(currentImage, &uboDanceDace, sizeof(uboDanceDace), 0);
 
-			World = translate(glm::mat4(1.0), glm::vec3(14.0f, 0.0f, -9.5f)) *
-				glm::scale(glm::mat4(1), glm::vec3(12.0f));
+			World = translate(glm::mat4(1.0), glm::vec3(14.8f, 0.0f, -9.4f)) *
+				glm::scale(glm::mat4(1), glm::vec3(12.0f)) *
+				glm::rotate(glm::mat4(1.0), glm::radians(-90.0f), glm::vec3(0, 1, 0));
 			uboSnackMachine.amb = 1.0f; uboSnackMachine.gamma = 180.0f; uboSnackMachine.sColor = glm::vec3(1.0f);
 			uboSnackMachine.mvpMat = Prj * View * World;
 			uboSnackMachine.mMat = World;
@@ -1139,7 +1156,7 @@ protected:
 			DSPopup.map(currentImage, &uboPopup, sizeof(uboPopup), 0);
 			
 			World = rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0, 1, 0)) *
-			translate(glm::mat4(1.0), glm::vec3(-2.3f, 2.8f, 10.6f)) *
+			translate(glm::mat4(1.0), glm::vec3(-2.3f, 2.8f, 10.5f)) *
 			glm::scale(glm::mat4(1), glm::vec3(1.2f, 1.0f, 0.25f));
 			uboBanner.amb = 1.0f; uboBanner.gamma = 180.0f; uboBanner.sColor = glm::vec3(1.0f);
 			uboBanner.mvpMat = Prj * View * World;
