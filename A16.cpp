@@ -209,7 +209,8 @@ protected:
 	float yULL = -pongLength / 2;
 	glm::vec2 pongPosL = glm::vec2(xULL + pongWidth / 2, 0.0f);
 	glm::vec2 pongPosBall = glm::vec2(0.0f, 0.0f);
-	glm::vec2 pongVelBall = glm::vec2(0.0001f, 0.0001f);
+	glm::vec2 pongVelBallInitial = glm::vec2(0.002f, 0.002f);
+	glm::vec2 pongVelBall = pongVelBallInitial;
 	float ballRadius = 0.03f;
 
 	// Jump parameters
@@ -220,13 +221,12 @@ protected:
 	float maxJumpTime = 1.3f;       // Maximum duration of the jump
 	float jumpTime = 0.0f;          // Current time elapsed during the jump
 
-	using Clock = std::chrono::high_resolution_clock;
 
 	// Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, titile and initial background
-		windowWidth = 1024;
-		windowHeight = 768;
+		windowWidth = 1920;
+		windowHeight = 1080;
 		windowTitle = "SpaceArcade";
 		windowResizable = GLFW_TRUE;
 		initialBackgroundColor = { 0.0f, 0.005f, 0.01f, 1.0f };
@@ -678,8 +678,8 @@ protected:
 		pongVelBall.x *= -1.0f;
 		
 		//variation of ball velocity min and max
-		float min = 0.00001f;
-		float max = 0.00003f;
+		float min = 0.0001f;
+		float max = 0.0003f;
 		//limit to the ball velocity x and y
 		float velLimitX = 0.0003f; 
 		float velLimitY = 0.0002f;
@@ -801,7 +801,7 @@ protected:
 				break;
 			case 1:
 				float x = 0.0f;
-				float pongVel = 0.001f;
+				float pongVel = 0.005f;
 				pongPosBall += pongVelBall;
 
 				if (pongPosBall.y + ballRadius <= -1.0f || pongPosBall.y + ballRadius >= 1.0f) {
@@ -814,7 +814,7 @@ protected:
 					}
 					else if (pongPosBall.x - ballRadius <= -1.0f) {
 						pongPosBall = glm::vec2(0.0f, 0.0f);
-						pongVelBall = glm::vec2(0.0001f, 0.0001f);
+						pongVelBall = pongVelBallInitial;
 					}
 					
 				}
@@ -826,7 +826,7 @@ protected:
 					}
 					else if (pongPosBall.x + ballRadius >= 1.0f) {
 						pongPosBall = glm::vec2(0.0f, 0.0f);
-						pongVelBall = glm::vec2(0.0001f, 0.0001f);
+						pongVelBall = pongVelBallInitial;
 					}
 
 				}
@@ -851,27 +851,6 @@ protected:
 		}
 	}
 
-	float getFPS() {
-		// Frame timing variables
-		static int frameCount = 0;
-		static float fps = 0.0f;
-		static auto prevFrameTime = Clock::now();
-
-		// Start timing the frame
-		auto frameStart = Clock::now();
-
-		// Calculate fps
-		frameCount++;
-		auto frameTime = std::chrono::duration<float, std::chrono::seconds::period>(frameStart - prevFrameTime).count();
-		if (frameTime >= 1.0f) {
-			fps = static_cast<float>(frameCount) / frameTime;
-			frameCount = 0;
-			prevFrameTime = frameStart;
-		}
-
-		return fps;
-	}
-
 	// Here is where you update the uniforms.
 	// Very likely this will be where you will be writing the logic of your application.
 	void updateUniformBuffer(uint32_t currentImage) {
@@ -880,16 +859,13 @@ protected:
 		bool rangeVideogame = Pos[0].x < 5.5f && Pos[0].x > 0.0f && Pos[0].z < 0.0f && Pos[0].z > -2.5f;
 
 		if (glfwGetKey(window, GLFW_KEY_P) && currScene == 0 && rangeVideogame || glfwGetKey(window, GLFW_KEY_P) && currScene == 1) {
-
-			std::cout << "Scene : " << getFPS() << "\n";
-
 			if (!debounce) {
 				debounce = true;
 				curDebounce = GLFW_KEY_SPACE;
 				currScene = (currScene + 1) % 2;
 				std::cout << "Scene : " << currScene << "\n";
 				pongPosBall = glm::vec2(0.0f, 0.0f);
-				pongVelBall = glm::vec2(0.0001f, 0.0001f);
+				pongVelBall = pongVelBallInitial;
 				pongPosR = glm::vec2(xURR - pongWidth / 2, 0.0f);
 				pongPosL = glm::vec2(xULL + pongWidth / 2, 0.0f);
 
