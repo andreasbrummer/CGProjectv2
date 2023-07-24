@@ -106,17 +106,17 @@ protected:
 
     // Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexOBJ> MCabinet, MAsteroids, MRoom, MDecoration, MCeiling,
-                     MFloor, MDanceDance, MBattleZone, MNudge, MSnackMachine, MCeilingLamp1,
-                     MCeilingLamp2, MPoolLamp, MPoolTable, MDoor, MSkyBox, MBanner, MWorldFloor,
+	Model<VertexOBJ> MDefender, MAsteroids, MRoom, MDecoration, MCeiling,
+                     MFloor, MDanceDance, MBattleZone, MNudge, MSnackMachine, MCeilingLamp, 
+					 MPoolLamp, MPoolTable, MDoor, MSkyBox, MBanner, MWorldFloor,
 					 MLantern;
 
 	Model<VertexOverlay> MPongR, MPongL, MPongBall, MPongNet, MPopup;
 
     std::vector<Model<VertexOBJ>*> objModels = {
-        &MCabinet, &MAsteroids, &MRoom, &MDecoration, &MCeiling,
+        &MDefender, &MAsteroids, &MRoom, &MDecoration, &MCeiling,
         &MFloor, &MDanceDance, &MBattleZone, &MNudge, &MSnackMachine,
-        &MCeilingLamp1, &MCeilingLamp2, &MPoolLamp, &MPoolTable, &MDoor,
+        &MCeilingLamp, &MPoolLamp, &MPoolTable, &MDoor,
         &MSkyBox, &MBanner, &MWorldFloor, &MLantern
     };
 
@@ -140,21 +140,21 @@ protected:
         &DSJLantern1, &DSJLantern2
     };
 
-    Texture TCabinet, TRoom, TDecoration, TCeiling, TFloor, TAsteroids,
-            TWhite, TPoolLamp, TPoolLampEmi, TForniture, TskyBox,
+    Texture TDefender, TRoom, TDecoration, TCeiling, TFloor, TAsteroids,
+            TWhite, TPoolLamp, TPoolLampEmi, TskyBox,
             TDanceDance, TBattleZone, TNudge, TSnackMachine, TPoolTable, TDoor,
 			TBanner, TWorldFloor, TPopup, TLanternColor, TLanternEmi, TPongCabinetEmi;
 
     std::vector<Texture*> textures = {
-        &TCabinet, &TRoom, &TDecoration, &TCeiling, &TFloor, &TWhite,
-        &TPoolLamp, &TPoolLampEmi, &TForniture, &TAsteroids, &TskyBox,
+        &TDefender, &TRoom, &TDecoration, &TCeiling, &TFloor, &TWhite,
+        &TPoolLamp, &TPoolLampEmi, &TAsteroids, &TskyBox,
         &TDanceDance, &TBattleZone, &TNudge, &TSnackMachine, &TPoolTable,
         &TDoor, &TBanner, &TPopup, &TWorldFloor, &TPongCabinetEmi , &TLanternEmi,
         &TLanternColor
 	};
 
     std::vector<OBJStruct*> Objects = {
-        new OBJStruct{ &DSCabinet2, &TCabinet, sizeof(OBJUniformBlock), &MCabinet, &POBJ, 0},
+        new OBJStruct{ &DSCabinet2, &TDefender, sizeof(OBJUniformBlock), &MDefender, &POBJ, 0},
         new OBJStruct{ &DSAsteroids, &TAsteroids, sizeof(OBJUniformBlock), &MAsteroids, &POBJ, 0},
         new OBJStruct{ &DSDanceDance, &TDanceDance, sizeof(OBJUniformBlock), &MDanceDance, &POBJ, 0},
         new OBJStruct{ &DSBattleZone, &TBattleZone, sizeof(OBJUniformBlock), &MBattleZone, &POBJ, 0},
@@ -318,25 +318,24 @@ protected:
 		// The second parameter is the pointer to the vertex definition for this model
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		MCabinet.init(this, &VOBJ, "Models/Cabinet.obj", OBJ);
-		MAsteroids.init(this, &VOBJ, "Models/Asteroids.obj", OBJ);
-		MDanceDance.init(this, &VOBJ, "Models/DanceDance.obj", OBJ);
-		MBattleZone.init(this, &VOBJ, "Models/BattleZone.obj", OBJ);
-		MNudge.init(this, &VOBJ, "Models/Nudge.obj", OBJ);
-		MRoom.init(this, &VOBJ, "Models/RoomV5.obj", OBJ);
-		MCeiling.init(this, &VOBJ, "Models/CeilingV4.obj", OBJ);
-		MDecoration.init(this, &VOBJ, "Models/Decoration3.obj", OBJ);
-		MFloor.init(this, &VOBJ, "Models/Floor.obj", OBJ);
-		MCeilingLamp1.init(this, &VOBJ, "Models/PointLightLamp.obj", OBJ);
-		MCeilingLamp2.init(this, &VOBJ, "Models/PointLightLamp.obj", OBJ);
-		MPoolLamp.init(this, &VOBJ,"Models/PoolLampProva.obj", OBJ);
-		MPoolTable.init(this, &VOBJ, "Models/POOLTABLE.obj", OBJ);
-		MSnackMachine.init(this, &VOBJ, "Models/NukaCola.obj", OBJ);
-		MSkyBox.init(this, &VOBJ, "Models/SkyBoxCube.obj", OBJ);
-		MDoor.init(this, &VOBJ, "Models/shutterDoor.obj", OBJ);
-		MBanner.init(this, &VOBJ, "Models/Insegna.obj", OBJ);
-		MWorldFloor.init(this, &VOBJ, "Models/WorldFloor.obj", OBJ);
-		MLantern.init(this, &VOBJ, "Models/japaneseLantern.obj", OBJ);
+		MDefender.init(this, &VOBJ, "Assets/DefenderCabinet/DefenderCabinet.obj", OBJ);
+		MAsteroids.init(this, &VOBJ, "Assets/AsteroidsCabinet/AsteroidsCabinet.obj", OBJ);
+		MDanceDance.init(this, &VOBJ, "Assets/DanceDanceCabinet/DanceDanceCabinet.obj", OBJ);
+		MBattleZone.init(this, &VOBJ, "Assets/BattlezoneCabinet/BattlezoneCabinet.obj", OBJ);
+		MNudge.init(this, &VOBJ, "Assets/NudgeCabinet/NudgeCabinet.obj", OBJ);
+		MRoom.init(this, &VOBJ, "Assets/Room/Room.obj", OBJ);
+		MCeiling.init(this, &VOBJ, "Assets/Ceiling/Ceiling.obj", OBJ);
+		MDecoration.init(this, &VOBJ, "Assets/Decoration/Decoration.obj", OBJ);
+		MFloor.init(this, &VOBJ, "Assets/Floor/Floor.obj", OBJ);
+		MCeilingLamp.init(this, &VOBJ, "Assets/CeilingLamp/CeilingLamp.obj", OBJ);
+		MPoolLamp.init(this, &VOBJ,"Assets/PoolLamp/PoolLamp.obj", OBJ);
+		MPoolTable.init(this, &VOBJ, "Assets/PoolTable/PoolTable.obj", OBJ);
+		MSnackMachine.init(this, &VOBJ, "Assets/SnackMachine/SnackMachine.obj", OBJ);
+		MSkyBox.init(this, &VOBJ, "Assets/SkyBox/SkyBox.obj", OBJ);
+		MDoor.init(this, &VOBJ, "Assets/Door/Door.obj", OBJ);
+		MBanner.init(this, &VOBJ, "Assets/Banner/Banner.obj", OBJ);
+		MWorldFloor.init(this, &VOBJ, "Assets/WorldFloor/WorldFloor.obj", OBJ);
+		MLantern.init(this, &VOBJ, "Assets/Lantern/Lantern.obj", OBJ);
 		// Creates a mesh with direct enumeration of vertices and indices
 
 		//Mesh of the popup alert
@@ -405,32 +404,31 @@ protected:
 
 		// Create the textures
 		// The second parameter is the file name
-		TCabinet.init(this, "textures/DefenderTextures/Material.001_baseColor.png");
-		TRoom.init(this, "textures/RoomTextures/ArcadeWalls4.jpg");
-		TDecoration.init(this, "textures/RoomTextures/textureDecoration.jpg");
-		TCeiling.init(this, "textures/RoomTextures/CeilingV4.png");
-		TFloor.init(this, "textures/RoomTextures/WoodFloor.jpg");
-		TPoolLamp.init(this, "textures/LampTextures/TexturesCity.png");
-		TPoolLampEmi.init(this, "textures/LampTextures/TexturesCityEmission.png");
-		TForniture.init(this, "textures/Textures_Forniture.png");
-        TAsteroids.init(this,"textures/AsteroidsTextures/Material.001_baseColor.png");
-        TDanceDance.init(this,"textures/DanceDanceTextures/lambert3_baseColor.png");
-        TBattleZone.init(this,"textures/BattleZoneTextures/Material.001_baseColor.png");
-        TNudge.init(this,"textures/Nudge/Material.002_albedo.jpg");
-        TSnackMachine.init(this,"textures/NukaColaTexture/albedo.jpg");
-        TPoolTable.init(this, "textures/PoolTableTexture/pooltablelow_POOL_TABLE_BaseColor.png");
-        TDoor.init(this,"textures/shutterTexture.png");
-		TBanner.init(this, "textures/DarkGrey.png");
-		TWorldFloor.init(this, "textures/myGrid.png");
-		TWhite.init(this, "textures/white.png");
-		TLanternColor.init(this, "textures/JapaneseLanternTextures/LanternColor.png");
-		TLanternEmi.init(this, "textures/JapaneseLanternTextures/LanternEmiV2.png");
-		TPongCabinetEmi.init(this, "textures/DefenderTextures/PongEmit.png");
-		TPopup.init(this, "textures/PressP.png");
+		TDefender.init(this, "Assets/DefenderCabinet/Textures/DefenderTexture.png");
+		TPongCabinetEmi.init(this, "Assets/DefenderCabinet/Textures/PongEmit.png");
+		TRoom.init(this, "Assets/Room/Textures/ArcadeWalls.jpg");
+		TDecoration.init(this, "Assets/Decoration/Texture/TextureDecoration.jpg");
+		TCeiling.init(this, "Assets/Ceiling/Textures/Ceiling.png");
+		TFloor.init(this, "Assets/Floor/Textures/WoodFloor.jpg");
+		TPoolLamp.init(this, "Assets/PoolLamp/Textures/TexturesCity.png");
+		TPoolLampEmi.init(this, "Assets/PoolLamp/Textures/TexturesCityEmission.png");
+        TAsteroids.init(this,"Assets/AsteroidsCabinet/Textures/Material.001_baseColor.png");
+        TDanceDance.init(this,"Assets/DanceDanceCabinet/Textures/lambert3_baseColor.png");
+        TBattleZone.init(this,"Assets/BattlezoneCabinet/Textures/Material.001_baseColor.png");
+        TNudge.init(this,"Assets/NudgeCabinet/Textures/Material.002_albedo.jpg");
+        TSnackMachine.init(this,"Assets/SnackMachine/Textures/albedo.jpg");
+        TPoolTable.init(this, "Assets/PoolTable/Textures/pooltablelow_POOL_TABLE_BaseColor.png");
+        TDoor.init(this,"Assets/Door/Textures/DoorTexture.png");
+		TBanner.init(this, "Assets/Banner/Textures/DarkGrey.png");
+		TWorldFloor.init(this, "Assets/WorldFloor/Textures/MyGrid.png");
+		TWhite.init(this, "Assets/OtherTextures/White.png");
+		TLanternColor.init(this, "Assets/Lantern/Textures/LanternColor.png");
+		TLanternEmi.init(this, "Assets/Lantern/Textures/LanternEmiV2.png");
+		TPopup.init(this, "Assets/OtherTextures/PressP.png");
 
-		const char* T2fn[] = { "textures/sky/px.png", "textures/sky/nx.png",
-							   "textures/sky/py.png",   "textures/sky/ny.png",
-							   "textures/sky/pz.png", "textures/sky/nz.png" };
+		const char* T2fn[] = { "Assets/SkyBox/Textures/px.png", "Assets/SkyBox/Textures/nx.png",
+							   "Assets/SkyBox/Textures/py.png", "Assets/SkyBox/Textures/ny.png",
+							   "Assets/SkyBox/Textures/pz.png", "Assets/SkyBox/Textures/nz.png" };
 		TskyBox.initCubic(this, T2fn);
 		// Init local variables
 		alpha[currScene] = glm::radians(180.0f);
@@ -498,7 +496,7 @@ protected:
 
 		DSCabinet1.init(this, &DSLAdvanced, {
 			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
-			{1, TEXTURE, 0, &TCabinet},
+			{1, TEXTURE, 0, &TDefender},
 			{2,TEXTURE,0,&TPongCabinetEmi} //using the same emission as the japanese lanterns
 		});
 
@@ -624,15 +622,14 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPoolLamp.indices.size()), 1, 0, 0, 0);
 
-			MCeilingLamp1.bind(commandBuffer);
+			MCeilingLamp.bind(commandBuffer);
 			DSCeilingLamp1.bind(commandBuffer, PEmi, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCeilingLamp1.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MCeilingLamp.indices.size()), 1, 0, 0, 0);
 
-			MCeilingLamp2.bind(commandBuffer);
 			DSCeilingLamp2.bind(commandBuffer, PEmi, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCeilingLamp2.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MCeilingLamp.indices.size()), 1, 0, 0, 0);
 
 			MLantern.bind(commandBuffer);
 			DSJLantern1.bind(commandBuffer, PEmi, 1, currentImage);
@@ -648,10 +645,10 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MBanner.indices.size()), 1, 0, 0, 0);
 
-			MCabinet.bind(commandBuffer);
+			MDefender.bind(commandBuffer);
 			DSCabinet1.bind(commandBuffer, PEmi, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MCabinet.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MDefender.indices.size()), 1, 0, 0, 0);
 
 			break;
 		case 1:
