@@ -56,12 +56,6 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec4 PLightColorLantern2;
 };
 
-struct SkyboxUniformBufferObject {
-	alignas(16) glm::mat4 mvpMat;
-	alignas(16) glm::mat4 mMat;
-	alignas(16) glm::mat4 nMat;
-};
-
 // The vertices data structures
 //For almost every object of the scene
 struct VertexOBJ {
@@ -247,7 +241,7 @@ protected:
 		windowWidth = 1920;
 		windowHeight = 1080;
 		windowTitle = "SpaceArcade";
-		windowResizable = GLFW_TRUE;
+		windowResizable = GLFW_FALSE;
 		initialBackgroundColor = { 0.0f, 0.005f, 0.01f, 1.0f };
 
 		// Descriptor pool sizes
@@ -282,7 +276,7 @@ protected:
 		DSLAdvanced.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}, //main color texture
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT} //emission color texture
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}  //emission color texture
 		});
 
 		// Vertex descriptors
@@ -758,9 +752,6 @@ protected:
         glm::vec3 ux ;
         glm::vec3 uz ;
         getSixAxis(deltaT, m, r, fire);
-		static bool wasFire = false;
-		bool handleFire = (wasFire && (!fire));
-		wasFire = fire;
 		switch (currScene) {
 			case 0:
 
@@ -890,7 +881,7 @@ protected:
 		if (glfwGetKey(window, GLFW_KEY_P) && currScene == 0 && rangeVideogame || glfwGetKey(window, GLFW_KEY_P) && currScene == 1) {
 			if (!debounce) {
 				debounce = true;
-				curDebounce = GLFW_KEY_SPACE;
+				curDebounce = GLFW_KEY_P;
 				currScene = (currScene + 1) % 2;
 				std::cout << "Scene : " << currScene << "\n";
 				pongPosBall = glm::vec2(0.0f, 0.0f);
@@ -901,7 +892,7 @@ protected:
 				RebuildPipeline();
 			}
 		} else {
-			if ((curDebounce == GLFW_KEY_SPACE) && debounce) {
+			if ((curDebounce == GLFW_KEY_P) && debounce) {
 				debounce = false;
 				curDebounce = 0;
 			}
