@@ -151,22 +151,22 @@ protected:
     };
 
     Texture TDefender, TRoom, TDecoration, TCeiling, TFloor, TAsteroids,
-            TWhite, TPoolLamp, TPoolLampEmi, TskyBox,
-            TDanceDance, TBattleZone, TNudge, TSnackMachine, TPoolTable, TDoor,
-			TBanner, TWorldFloor, TPopup, TLanternColor, TLanternEmi, TPongCabinetEmi;
+            TWhite, TPoolLamp, TPoolLampEmi, TskyBox, TDanceDance, 
+			TBattleZone, TNudge, TSnackMachine, TPoolTable, TDoor,
+			TBanner, TWorldFloor, TPopup, TLanternColor, TLanternEmi,
+			TPongCabinetEmi, TDanceDanceEmi;
 
-    std::vector<Texture*> textures = {
-        &TDefender, &TRoom, &TDecoration, &TCeiling, &TFloor, &TWhite,
-        &TPoolLamp, &TPoolLampEmi, &TAsteroids, &TskyBox,
-        &TDanceDance, &TBattleZone, &TNudge, &TSnackMachine, &TPoolTable,
-        &TDoor, &TBanner, &TPopup, &TWorldFloor, &TPongCabinetEmi , &TLanternEmi,
-        &TLanternColor
+	std::vector<Texture*> textures = {
+		&TDefender, &TRoom, &TDecoration, &TCeiling, &TFloor, &TWhite,
+		&TPoolLamp, &TPoolLampEmi, &TAsteroids, &TskyBox,
+		&TDanceDance, &TBattleZone, &TNudge, &TSnackMachine, &TPoolTable,
+		&TDoor, &TBanner, &TPopup, &TWorldFloor, &TPongCabinetEmi , &TLanternEmi,
+		&TLanternColor, &TDanceDanceEmi
 	};
 
     std::vector<OBJStruct*> Objects = {
         new OBJStruct{ &DSCabinet2, &TDefender, sizeof(OBJUniformBlock), &MDefender, &POBJ, 0},
         new OBJStruct{ &DSAsteroids, &TAsteroids, sizeof(OBJUniformBlock), &MAsteroids, &POBJ, 0},
-        new OBJStruct{ &DSDanceDance, &TDanceDance, sizeof(OBJUniformBlock), &MDanceDance, &POBJ, 0},
         new OBJStruct{ &DSBattleZone, &TBattleZone, sizeof(OBJUniformBlock), &MBattleZone, &POBJ, 0},
         new OBJStruct{ &DSNudge, &TNudge, sizeof(OBJUniformBlock), &MNudge, &POBJ, 0},
         new OBJStruct{ &DSDoor, &TDoor, sizeof(OBJUniformBlock), &MDoor, &POBJ, 0},
@@ -437,7 +437,8 @@ protected:
 		TPoolLamp.init(this, "Assets/PoolLamp/Textures/TexturesCity.png");
 		TPoolLampEmi.init(this, "Assets/PoolLamp/Textures/TexturesCityEmission.png");
         TAsteroids.init(this,"Assets/AsteroidsCabinet/Textures/Material.001_baseColor.png");
-        TDanceDance.init(this,"Assets/DanceDanceCabinet/Textures/lambert3_baseColor.png");
+        TDanceDance.init(this,"Assets/DanceDanceCabinet/Textures/lambert3_emissive.png");
+		TDanceDanceEmi.init(this, "Assets/DanceDanceCabinet/Textures/lambert3_baseColor.png");
         TBattleZone.init(this,"Assets/BattleZoneCabinet/Textures/Material.001_baseColor.png");
         TNudge.init(this,"Assets/NudgeCabinet/Textures/Material.002_albedo.jpg");
         TSnackMachine.init(this,"Assets/SnackMachine/Textures/albedo.jpg");
@@ -523,6 +524,12 @@ protected:
 			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TDefender},
 			{2,TEXTURE,0,&TPongCabinetEmi} 
+		});
+
+		DSDanceDance.init(this, &DSLAdvanced, {
+			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
+			{1, TEXTURE, 0, &TDanceDance},
+			{2,TEXTURE,0,&TDanceDanceEmi}
 		});
 
         DSGubo.init(this, &DSLGubo, {
@@ -667,6 +674,11 @@ protected:
 			DSCabinet1.bind(commandBuffer, PEmi, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MDefender.indices.size()), 1, 0, 0, 0);
+
+			MDanceDance.bind(commandBuffer);
+			DSDanceDance.bind(commandBuffer, PEmi, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MDanceDance.indices.size()), 1, 0, 0, 0);
 
 			break;
 		case 1:
