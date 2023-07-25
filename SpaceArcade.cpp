@@ -11,41 +11,47 @@
 //        mat3  : alignas(16)
 //        mat4  : alignas(16)
 
+//This is the data structure used for basic objects with only 1 texture
 struct OBJUniformBlock {
-	alignas(4) float amb;
-	alignas(4) float gamma;
-	alignas(16) glm::vec3 sColor;
-	alignas(16) glm::mat4 mvpMat;
-	alignas(16) glm::mat4 mMat;
-	alignas(16) glm::mat4 nMat;
-};
-
-struct UniformBlockSimple {
-	alignas(16) glm::mat4 mMat;
+	alignas(4) float amb; //how the object is affected by the ambient light
+	alignas(4) float gamma; // gamma affects the reflection of the object (higher gamma --> smaller "light circle" and more mirror-like object)
+	alignas(16) glm::vec3 sColor; // This is the color of the light that gets reflected by the object (i.e. the color of the "light circle")
+	alignas(16) glm::mat4 mvpMat; //world view proj matrix
+	alignas(16) glm::mat4 mMat; //world matrix
+	alignas(16) glm::mat4 nMat; // inverse, transpose of the world matrix. Used in the shader to compute the normals
 };
 
 struct OverlayUniformBlock {
-	alignas(4) float visible;
+	alignas(4) float visible; //A boolean used to make the popup appear/disappear
 };
 
 struct PongUniformBlock {
-	alignas(8) glm::vec2 pPos;
+	alignas(8) glm::vec2 pPos; //Position of the object
 };
 
+//Gubo is passed to (almost) every shader as it contains the information of the lights
 struct GlobalUniformBlock {
+	//Direct light: Actually turned off
 	alignas(16) glm::vec3 DlightDir;
 	alignas(16) glm::vec3 DlightColor;
+	//Ambient light
 	alignas(16) glm::vec3 AmbLightColor;
+	//Position of the viewer
 	alignas(16) glm::vec3 eyePos;
-	alignas(16) glm::vec3 PLightPos;
-	alignas(16) glm::vec4 PLightColor;
+	//Point light 1
+	alignas(16) glm::vec3 PLightPos1;
+	alignas(16) glm::vec4 PLightColor1;
+	//Point light 2
 	alignas(16) glm::vec3 PLightPos2;
 	alignas(16) glm::vec4 PLightColor2;
+	//Spot light
 	alignas(16) glm::vec3 SLightPos;
 	alignas(16) glm::vec3 SLightDir;
 	alignas(16) glm::vec4 SLightColor;
+	//Point light lantern 1
 	alignas(16) glm::vec3 PLightPosLantern1;
 	alignas(16) glm::vec4 PLightColorLantern1;
+	//Point light lantern 2
 	alignas(16) glm::vec3 PLightPosLantern2;
 	alignas(16) glm::vec4 PLightColorLantern2;
 };
@@ -57,30 +63,34 @@ struct SkyboxUniformBufferObject {
 };
 
 // The vertices data structures
+//For almost every object of the scene
 struct VertexOBJ {
 	glm::vec3 pos;
 	glm::vec3 norm;
 	glm::vec2 UV;
 };
 
+//For pong objects and popup
 struct VertexOverlay {
 	glm::vec2 pos;
 	glm::vec2 UV;
 };
 
+//This is a structure that contains all the information of an object
 struct OBJStruct{
     DescriptorSet *DS;
     Texture *T;
-    int s ;
+    int s; //size of uniform block
     Model<VertexOBJ> *M;
     Pipeline *P;
     int currScene;
 };
 
+//This is a structure that contains all the information of an object of the pong game
 struct PongStruct{
     DescriptorSet *DS;
     Texture *T;
-    int s ;
+    int s; //size of uniform block
     Model<VertexOverlay> *M;
     Pipeline *P;
     int currScene;
@@ -184,36 +194,42 @@ protected:
                     uboCeilingLamp2, uboPoolLamp, uboDanceDace, uboBattleZone,
                     uboNudge, uboSnackMachine, uboPoolTable, uboDoor, uboSkyBox,
 					uboBanner, uboWorldFloor, uboJLantern1, uboJLantern2;
+
 	OverlayUniformBlock uboPopup, uboPongNet;
+
 	PongUniformBlock uboPong;
+
 	GlobalUniformBlock gubo;
 
 	// Other application parameters
 	int currScene = 0;
-	bool rangeVideogame;
+	bool rangeVideogame; //when this bool is true, the popup of the game comes out
 	glm::mat4 View = glm::mat4(1);
 	glm::mat4 Prj = glm::mat4(1);
 	glm::mat4 World = glm::mat4(1);
-	glm::vec3 Pos[2] = { glm::vec3(12,0,-25), glm::vec3(0,0,6) };
+	glm::vec3 Pos = glm::vec3(12,0,-25);
 	glm::vec3 cameraPos;
 
-	float alpha[2] = { glm::radians(0.0f), 0.0f };
-	float beta[2] = { glm::radians(0.0f), 0.0f };
+	float alpha = glm::radians(180.0f);
+	float beta = glm::radians(0.0f);
+	//Parameters of the pong bars
 	float pongLength = 0.5f;
 	float pongWidth = 0.05f;
 
-	//(-1,-1) <-- top-left, (1,1) <-- bottom-right, (1,-1) <-- top-right, (-1,1) <-- bottom_left
-	//xURR = x coordinate of upper-right vertix
+	// COORD: (-1,-1) <-- top-left, (1,1) <-- bottom-right, (1,-1) <-- top-right, (-1,1) <-- bottom_left
+	//xURR = x coordinate of upper-right vertex
 	float xURR = 0.9f;
 	float yURR = -pongLength / 2;
-	glm::vec2 pongPosR = glm::vec2(xURR - pongWidth/2, 0.0f);
-	//xULL = x coordinate of upper-left vertix
+	glm::vec2 pongPosR = glm::vec2(xURR - pongWidth/2, 0.0f); //Position of the right pong bar
+
+	//xULL = x coordinate of upper-left vertex
 	float xULL = -0.9f;
 	float yULL = -pongLength / 2;
-	glm::vec2 pongPosL = glm::vec2(xULL + pongWidth / 2, 0.0f);
-	glm::vec2 pongPosBall = glm::vec2(0.0f, 0.0f);
-	glm::vec2 pongVelBallInitial = glm::vec2(0.002f, 0.002f);
-	glm::vec2 pongVelBall = pongVelBallInitial;
+	glm::vec2 pongPosL = glm::vec2(xULL + pongWidth / 2, 0.0f); //Position of the left pong bar
+
+	glm::vec2 pongPosBall = glm::vec2(0.0f, 0.0f); //Pong ball position
+	glm::vec2 pongVelBallInitial = glm::vec2(0.002f, 0.002f); //Pong ball initial velocity
+	glm::vec2 pongVelBall = pongVelBallInitial; //Pong ball velocity
 	float ballRadius = 0.03f;
 
 	// Jump parameters
@@ -235,9 +251,9 @@ protected:
 		initialBackgroundColor = { 0.0f, 0.005f, 0.01f, 1.0f };
 
 		// Descriptor pool sizes
-		uniformBlocksInPool = 110;
-		texturesInPool = 110;
-		setsInPool = 110;
+		uniformBlocksInPool = 50;
+		texturesInPool = 50;
+		setsInPool = 50;
 
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -251,19 +267,22 @@ protected:
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
+
+		//DSL of normal objects, with only 1 texture (main color)
         DSLOBJ.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT} //main color texture
 		});
 
 		DSLGubo.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
 		});
-
+		
+		//This is the DSL for emissive objects, as they have 2 textures
 		DSLAdvanced.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}, //main color texture
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT} //emission color texture
 		});
 
 		// Vertex descriptors
@@ -344,17 +363,20 @@ protected:
 		MPopup.indices = { 0, 1, 2, 1, 2, 3 };
 		MPopup.initMesh(this, &VOverlay);
 
+		//Mesh of pong right bar
 		MPongR.vertices = { {{xURR, yURR}, {0.8f,0.0f}}, {{xURR - pongWidth, yURR}, {0.0f,1.0f}},
 						  {{xURR, yURR + pongLength}, {1.0f,0.0f}}, {{xURR - pongWidth, yURR + pongLength}, {1.0f,1.0f}}};
 		MPongR.indices = { 0, 1, 2, 1, 2, 3 };
 		MPongR.initMesh(this, &VOverlay);
 
+		//Mesh of pong left bar
 		MPongL.vertices = { {{xULL, yULL}, {0.8f,0.0f}}, {{xULL + pongWidth, yULL}, {0.0f,1.0f}},
 						  {{xULL, yULL + pongLength}, {1.0f,0.0f}}, {{xULL + pongWidth, yULL + pongLength}, {1.0f,1.0f}} };
 		MPongL.indices = { 0, 1, 2, 1, 2, 3 };
 		MPongL.initMesh(this, &VOverlay);
 
-		int vertexNumber = 50;
+		//Algorithm to create the mesh of the pong ball
+		int vertexNumber = 50; //number of approximation vertices
 		float anglestep = 360.0f / vertexNumber;
 		//x center component
 		float xBall = 0.0f;
@@ -366,22 +388,24 @@ protected:
 		MPongBall.vertices.push_back({ {xBall + ballRadius, Ar * yBall}, {1.0f,0.0f}});
 
 		for (int i = 1; i < vertexNumber; i++){
+			//Push new vertex
 			MPongBall.vertices.push_back({{xBall + ballRadius * cos(glm::radians(i * anglestep)), Ar * (yBall + ballRadius * sin(glm::radians(i * anglestep)))},
 				{cos(glm::radians(i * anglestep)),sin(glm::radians(i * anglestep))}});
-
+			//Create a triangle with the new vertex, the previous one and the center of the ball
 			MPongBall.indices.push_back(0);
 			MPongBall.indices.push_back(i);
 			MPongBall.indices.push_back(i + 1);
 		}
-
+		//Create last triangle
 		MPongBall.indices.push_back(0);
 		MPongBall.indices.push_back(1);
 		MPongBall.indices.push_back(vertexNumber);
 
 		MPongBall.initMesh(this, &VOverlay);
 
-		int netNumber = 15;
-		//length of a rectangle of a net calculate as the total lenght of the screen divided by the number of rectangles * 2 (uno s� e uno no)
+		//Create mesh of the pong net
+		int netNumber = 15; //Number of rectangles in the net
+		//length of a rectangle of the net calculated as the total lenght of the screen divided by the number of rectangles * 2 (every other)
 		float netRectLenght = 2.0f / (netNumber * 2.0f);
 		float netRectWidht = 0.02f;
 
@@ -426,24 +450,23 @@ protected:
 		TLanternEmi.init(this, "Assets/Lantern/Textures/LanternEmiV2.png");
 		TPopup.init(this, "Assets/OtherTextures/PressP.png");
 
+		//Skybox textures
 		const char* T2fn[] = { "Assets/SkyBox/Textures/px.png", "Assets/SkyBox/Textures/nx.png",
 							   "Assets/SkyBox/Textures/py.png", "Assets/SkyBox/Textures/ny.png",
 							   "Assets/SkyBox/Textures/pz.png", "Assets/SkyBox/Textures/nz.png" };
 		TskyBox.initCubic(this, T2fn);
-		// Init local variables
-		alpha[currScene] = glm::radians(180.0f);
-		beta[currScene] = 0.0f;
 	}
 
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() {
-		// This creates a new pipeline (with the current surface), using its shaders
 
+		// This creates a new pipeline (with the current surface), using its shaders
         for (size_t i = 0; i < pipelines.size(); i++) {
             pipelines[i]->create();
         }
 
 		// Here you define the data set
+		//Initialization of basic object with only 1 texture
         for (size_t i = 0; i < Objects.size(); i++) {
             Objects[i]->DS->init(this, &DSLOBJ, {
                 {0, UNIFORM, Objects[i]->s, nullptr},
@@ -451,6 +474,7 @@ protected:
             });
         }
 
+		//Initialization of pong objects
         for (size_t i = 0; i < PongObjects.size(); i++) {
             PongObjects[i]->DS->init(this, &DSLOBJ, {
                 {0, UNIFORM, PongObjects[i]->s, nullptr},
@@ -458,6 +482,7 @@ protected:
             });
         }
 
+		//Initialization of descriptors sets of emissive objects (2 textures)
         DSPoolLamp.init(this, &DSLAdvanced, {
             {0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
             {1, TEXTURE, 0, &TPoolLamp},
@@ -497,7 +522,7 @@ protected:
 		DSCabinet1.init(this, &DSLAdvanced, {
 			{0, UNIFORM, sizeof(OBJUniformBlock), nullptr},
 			{1, TEXTURE, 0, &TDefender},
-			{2,TEXTURE,0,&TPongCabinetEmi} //using the same emission as the japanese lanterns
+			{2,TEXTURE,0,&TPongCabinetEmi} 
 		});
 
         DSGubo.init(this, &DSLGubo, {
@@ -551,41 +576,35 @@ protected:
 	// Here it is the creation of the command buffer:
 	// You send to the GPU all the objects you want to draw,
 	// with their buffers and textures
-
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 		switch (currScene) {
-		case 0:
+		case 0: //The basic scene with the arcade
+
 			// sets global uniforms (see below from parameters explanation)
 			DSGubo.bind(commandBuffer, POBJ, 0, currentImage);
+
 			// binds the pipeline
-            POBJ.bind(commandBuffer);
 			// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
-			// binds the model
-			// For a Model object, this command binds the corresponing index and vertex buffer
-			// to the command buffer passed in its parameter
-
-			// binds the data set
-			// For a Dataset object, this command binds the corresponing dataset
-			// to the command buffer and pipeline passed in its first and second parameters.
-			// The third parameter is the number of the set being bound
-			// As described in the Vulkan tutorial, a different dataset is required for each image in the swap chain.
-			// This is done automatically in file Starter.hpp, however the command here needs also the index
-			// of the current image in the swap chain, passed in its last parameter
-
-			// record the drawing command in the command bufferun
-			// the second parameter is the number of indexes to be drawn. For a Model object,
-			// this can be retrieved with the .indices.size() method.
+            POBJ.bind(commandBuffer);
 
             for (size_t i = 0; i < Objects.size() -3; i++) {
+				// binds the model
+				// For a Model object, this command binds the corresponing index and vertex buffer to the command buffer passed in its parameter
                 Objects[i]->M->bind(commandBuffer);
-                Objects[i]->DS->bind(commandBuffer,*(Objects[i]->P),1,currentImage);
+
+				// binds the data set
+				// For a Dataset object, this command binds the corresponing dataset to the command buffer and pipeline passed in its first and second parameters.
+                Objects[i]->DS->bind(commandBuffer,*(Objects[i]->P),1,currentImage); // The third parameter is the number of the set being bound
+
+				// record the drawing command in the command buffer
+				// the second parameter is the number of indexes to be drawn. For a Model object,
+				// this can be retrieved with the .indices.size() method.
                 vkCmdDrawIndexed(commandBuffer, 
 					static_cast<uint32_t>(Objects[i]->M->indices.size()), 1, 0, 0, 0);
             }
 
-            //Room
+            //Room (walls)
 			PRoom.bind(commandBuffer);
-
 			MRoom.bind(commandBuffer);
 			DSRoom.bind(commandBuffer, PRoom, 1, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
@@ -593,7 +612,6 @@ protected:
 
             //Floor
             PFloor.bind(commandBuffer);
-
             MFloor.bind(commandBuffer);
             DSFloor.bind(commandBuffer, PFloor, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer,
@@ -607,14 +625,14 @@ protected:
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MSkyBox.indices.size()), 1, 0, 0, 0);
 
-            //Overlay
+            //Popup
 			POverlay.bind(commandBuffer);
 			MPopup.bind(commandBuffer);
 			DSPopup.bind(commandBuffer, POverlay, 0, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MPopup.indices.size()), 1, 0, 0, 0);
 
-            //Emi
+            //Emission objects
 			PEmi.bind(commandBuffer);
 			DSGubo.bind(commandBuffer, PEmi, 0, currentImage);
 			MPoolLamp.bind(commandBuffer);
@@ -652,6 +670,7 @@ protected:
 
 			break;
 		case 1:
+			//Pong objects
 			PPong.bind(commandBuffer);
 
             for (size_t i = 0; i < PongObjects.size() -2; i++) {
@@ -672,7 +691,7 @@ protected:
 
     }
 
-	//function that change the velocity of the ball when it hits on of the 2 "racket"
+	//function that changes the velocity of the ball when it hits on of the 2 "racket"
 	void ballBounce() {
 		//flip ball velocity when it hits on of the 2 "racket"
 		pongVelBall.x *= -1.0f;
@@ -681,14 +700,14 @@ protected:
 		float min = 0.0001f;
 		float max = 0.0003f;
 		//limit to the ball velocity x and y
-		float velLimitX = 0.0003f; 
-		float velLimitY = 0.0002f;
+		float velLimitX = 0.01f; 
+		float velLimitY = 0.01f;
 		
 		//calculate a random value between min and max to add to the ball velocity
 		std::srand(std::time(0));
 		double randomValue = min + static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / (max - min)));
 
-		if (pongVelBall.x < velLimitX) {
+		if (abs(pongVelBall.x) < velLimitX) { //Don't increase the velocity if it has reached the maximum value (in abs)
 			if (pongVelBall.x > 0.0f) {
 				pongVelBall.x += randomValue;
 			}
@@ -700,7 +719,7 @@ protected:
 		std::srand(std::time(0));
 		randomValue = min + static_cast<double>(std::rand()) / (static_cast<double>(RAND_MAX / (max - min)));
 
-		if (pongVelBall.y < velLimitY) {
+		if (abs(pongVelBall.y) < velLimitY) { //Don't increase the velocity if it has reached the maximum value (in abs)
 			if (pongVelBall.y > 0.0f) {
 				pongVelBall.y += randomValue;
 			}
@@ -710,7 +729,7 @@ protected:
 		}
 	}
 
-	void GameLogic() {
+	void GameLogic() {	// Game Logic implementation
 		// Parameters
 		// Camera FOV-y, Near Plane and Far Plane
 		const float FOVy = glm::radians(45.0f);
@@ -720,7 +739,7 @@ protected:
 		const float camHeight = 2.35f;
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
-		float MOVE_SPEED = 2.0f * 2.0f;
+		float MOVE_SPEED;
 		// Integration with the timers and the controllers
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
@@ -733,14 +752,11 @@ protected:
 		wasFire = fire;
 		switch (currScene) {
 			case 0:
-				// Game Logic implementation
-		// Current Player Position - static variable make sure its value remain unchanged in subsequent calls to the procedure
 
-		// World
-				if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
+				if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) { //Running
 					MOVE_SPEED = 8.0f;
 				}
-				else {
+				else { //Walking
 					MOVE_SPEED = 2.0f;
 				}
 
@@ -762,63 +778,61 @@ protected:
 
 					// Calculate the new position based on the jump velocity
 					glm::vec3 jumpOffset = glm::vec3(0, jumpVelocity * deltaT, 0);
-					Pos[currScene] += jumpOffset;
+					Pos+= jumpOffset;
 
 					// Check if the maximum jump time is reached or if the player has landed
-					if (jumpTime >= maxJumpTime || Pos[currScene].y <= 0.0f) {
+					if (jumpTime >= maxJumpTime || Pos.y <= 0.0f) {
 						// End the jump
 						isJumping = false;
 						jumpVelocity = 0.0f;
 						jumpTime = 0.0f;
 
 						// Ensure the player is on the ground level
-						Pos[currScene].y = 0.0f;
+						Pos.y = 0.0f;
 					}
 				}
-
 				// Rotation
-				alpha[currScene] = alpha[currScene] - ROT_SPEED * deltaT * r.y;
-				beta[currScene] = beta[currScene] - ROT_SPEED * deltaT * r.x;
-				beta[currScene] = beta[currScene] < glm::radians(-90.0f) ? glm::radians(-90.0f) :
-					(beta[currScene] > glm::radians(90.0f) ? glm::radians(90.0f) : beta[currScene]);
+				alpha = alpha - ROT_SPEED * deltaT * r.y;
+				beta = beta - ROT_SPEED * deltaT * r.x;
+				beta = beta < glm::radians(-90.0f) ? glm::radians(-90.0f) :
+					(beta > glm::radians(90.0f) ? glm::radians(90.0f) : beta);
 
 				// Position
-                ux = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
-                uz = glm::rotate(glm::mat4(1.0f), alpha[currScene], glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
-				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.x * ux * deltaT;
-				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
-				//Pos[currScene].y = 0.0f;
-				Pos[currScene] = Pos[currScene] + MOVE_SPEED * m.z * uz * deltaT;
-				cameraPos = Pos[currScene] + glm::vec3(0, camHeight, 0);
+                ux = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
+                uz = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
+				Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
+				Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
+				Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
+				cameraPos = Pos + glm::vec3(0, camHeight, 0);
 
 				Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 				Prj[1][1] *= -1;
 
-				View = glm::rotate(glm::mat4(1.0), -beta[currScene], glm::vec3(1, 0, 0)) *
-					   glm::rotate(glm::mat4(1.0), -alpha[currScene], glm::vec3(0, 1, 0)) *
+				View = glm::rotate(glm::mat4(1.0), -beta, glm::vec3(1, 0, 0)) *
+					   glm::rotate(glm::mat4(1.0), -alpha, glm::vec3(0, 1, 0)) *
 					   glm::translate(glm::mat4(1.0), -cameraPos);
 
 				break;
 			case 1:
-				float x = 0.0f;
-				float pongVel = 0.005f;
-				pongPosBall += pongVelBall;
+				float pongVel = 0.005f; //velocity of the pong bars
+				pongPosBall += pongVelBall; //update pong ball position
 
-				if (pongPosBall.y + ballRadius <= -1.0f || pongPosBall.y + ballRadius >= 1.0f) {
-					pongVelBall.y *= -1.0f;
+				if (pongPosBall.y + ballRadius <= -1.0f || pongPosBall.y + ballRadius >= 1.0f) { //if the ball touches the horizontal borders
+					pongVelBall.y *= -1.0f; //flip y component of its velocity
 				}
 
-				if (pongPosBall.x - ballRadius <= pongPosL.x + pongWidth/2) {
-					if (pongPosBall.y + ballRadius >= pongPosL.y - pongLength/2 && pongPosBall.y - ballRadius <= pongPosL.y + pongLength/2) {
-						ballBounce();
+				if (pongPosBall.x - ballRadius <= pongPosL.x + pongWidth/2) { //if the ball passes the x of the left bar
+					if (pongPosBall.y + ballRadius >= pongPosL.y - pongLength/2 && pongPosBall.y - ballRadius <= pongPosL.y + pongLength/2) { //and also the y of the ball is inside the range of the bar
+						ballBounce(); //the ball has touched the left bar and needs to bounce back
 					}
-					else if (pongPosBall.x - ballRadius <= -1.0f) {
+					else if (pongPosBall.x - ballRadius <= -1.0f) { //else, it has passed the bar and the game restarts
+						//reset parameters
 						pongPosBall = glm::vec2(0.0f, 0.0f);
 						pongVelBall = pongVelBallInitial;
 					}
 					
 				}
-
+				//Same as left bar in previous case
 				if (pongPosBall.x + ballRadius >= pongPosR.x - pongWidth / 2) {
 					if (pongPosBall.y + ballRadius >= pongPosR.y - pongLength / 2 && pongPosBall.y - ballRadius <= pongPosR.y + pongLength / 2) {
 						ballBounce();
@@ -831,6 +845,9 @@ protected:
 
 				}
 
+				//Move the bars
+				
+				//Player 1 (left bar)
 				if (glfwGetKey(window, GLFW_KEY_W) && pongPosL.y > -1.0f + pongLength/2) {
 					pongPosL += glm::vec2(0, -pongVel);
 				}
@@ -839,6 +856,7 @@ protected:
 					pongPosL += glm::vec2(0, pongVel);
 				}
 
+				//Player 2 (right bar)
 				if (glfwGetKey(window, GLFW_KEY_UP) && pongPosR.y > -1.0f + pongLength/2) {
 					pongPosR += glm::vec2(0, -pongVel);
 				}
@@ -856,7 +874,8 @@ protected:
 	void updateUniformBuffer(uint32_t currentImage) {
 		static bool debounce = false;
 		static int curDebounce = 0;
-		bool rangeVideogame = Pos[0].x < 5.5f && Pos[0].x > 0.0f && Pos[0].z < 0.0f && Pos[0].z > -2.5f;
+		//this makes the popup comes out only if you are in the proximities of the working cabinet
+		bool rangeVideogame = Pos.x < 5.5f && Pos.x > 0.0f && Pos.z < 0.0f && Pos.z > -2.5f;
 
 		if (glfwGetKey(window, GLFW_KEY_P) && currScene == 0 && rangeVideogame || glfwGetKey(window, GLFW_KEY_P) && currScene == 1) {
 			if (!debounce) {
@@ -884,22 +903,36 @@ protected:
 		
 		GameLogic();
 		
-		gubo.DlightDir = glm::normalize(glm::vec3(3.0f, 0.0f, 0));
-		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.AmbLightColor = glm::vec3(0.05f);
-		gubo.eyePos = Pos[currScene];
+		//Set lights parameters
 
-		gubo.PLightPos = glm::vec3(3.0f, 3.9f, -4.0f);
-		gubo.PLightColor = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
+		//Direct light (actually turned off for better light effects)
+		gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f));
+		gubo.DlightColor = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+		//Ambient light color
+		gubo.AmbLightColor = glm::vec3(0.05f);
+
+		//Position of the viewer
+		gubo.eyePos = Pos;
+
+		//First point light parameters (ceiling lamp)
+		gubo.PLightPos1 = glm::vec3(3.0f, 3.9f, -4.0f);
+		gubo.PLightColor1 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
+
+		//Second point light parameters (ceiling lamp)
 		gubo.PLightPos2 = glm::vec3(11.0f, 3.9f, -4.0f);
 		gubo.PLightColor2 = glm::vec4(1.0f, 1.0f, 0.3f, 1.0f);
 
+		//Spot light parameters
 		gubo.SLightDir = glm::vec3(0.0f, 1.0f, 0.0f);
 		gubo.SLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.SLightPos = glm::vec3(10.0f, 3.0f, 1.0f);
 
+		//First lantern parameters
 		gubo.PLightPosLantern1 = glm::vec3(13.0f, 2.8f, -13.0f);
 		gubo.PLightColorLantern1 = glm::vec4(1.0f, 0.2f, 0.0f, 1.0f);
+
+		//Second lantern parameters
 		gubo.PLightPosLantern2 = glm::vec3(8.3f, 2.8f, -13.0f);
 		gubo.PLightColorLantern2 = glm::vec4(1.0f, 0.2f, 0.0f, 1.0f);
 
@@ -911,8 +944,7 @@ protected:
 			// the third parameter is its size
 			// the fourth parameter is the location inside the descriptor set of this uniform block
 
-			World = /*glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.0f)) **/
-				glm::scale(glm::mat4(1), glm::vec3(150.0f));
+			World = glm::scale(glm::mat4(1), glm::vec3(150.0f));
 
 			uboSkyBox.amb = 1.0f; uboSkyBox.gamma = 180.0f; uboSkyBox.sColor = glm::vec3(1.0f);
             uboSkyBox.mvpMat = Prj * View * World;
