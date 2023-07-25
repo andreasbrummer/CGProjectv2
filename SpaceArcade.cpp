@@ -311,13 +311,13 @@ protected:
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on..
-        POBJ.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/MeshFragTest.spv", { &DSLGubo, &DSLOBJ });
+        POBJ.init(this, &VOBJ, "shaders/ObjectVert.spv", "shaders/ObjectFrag.spv", { &DSLGubo, &DSLOBJ });
 
-        PSkyBox.init(this, &VOBJ, "shaders/SkyboxVert1.spv", "shaders/SkyBoxFrag1.spv", { &DSLGubo, &DSLOBJ });
+        PSkyBox.init(this, &VOBJ, "shaders/SkyboxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLGubo, &DSLOBJ });
         PSkyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PRoom.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/RoomFrag.spv", { &DSLGubo, &DSLOBJ });
+		PRoom.init(this, &VOBJ, "shaders/ObjectVert.spv", "shaders/RoomFrag.spv", { &DSLGubo, &DSLOBJ });
 
 		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", { &DSLOBJ });
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
@@ -327,9 +327,9 @@ protected:
 		PPong.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
-		PEmi.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/EmiFragTest.spv", { &DSLGubo, &DSLAdvanced});
+		PEmi.init(this, &VOBJ, "shaders/ObjectVert.spv", "shaders/EmiFrag.spv", { &DSLGubo, &DSLAdvanced});
 
-		PFloor.init(this, &VOBJ, "shaders/MeshVert.spv", "shaders/FloorFrag.spv", { &DSLGubo, &DSLOBJ });
+		PFloor.init(this, &VOBJ, "shaders/ObjectVert.spv", "shaders/FloorFrag.spv", { &DSLGubo, &DSLOBJ });
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -801,7 +801,6 @@ protected:
                 ux = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1);
                 uz = glm::rotate(glm::mat4(1.0f), alpha, glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1);
 				Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
-				Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0, 1, 0) * deltaT;
 				Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
 				cameraPos = Pos + glm::vec3(0, camHeight, 0);
 

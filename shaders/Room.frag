@@ -9,9 +9,9 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
 	vec3 DlightDir;        // direction of the direct light
-	vec3 DlightColor;    // color of the direct light
+	vec3 DlightColor;      // color of the direct light
 	vec3 AmbLightColor;    // ambient light
-	vec3 eyePos;        // position of the viewer
+	vec3 eyePos;           // position of the viewer
 
 	vec3 PLightPos;
 	vec4 PLightColor;
@@ -41,13 +41,14 @@ layout(set = 1, binding = 1) uniform sampler2D tex;
 
 //point light parameters
 //beta = decay factor. Beta = 0 --> constant, beta = 1 --> inverse linear, beta = 2 --> inverse squared
-//g alto = molto forte
+//g = intensity of light
 const float beta = 1.0f;
 const float g = 1.0f;
 
 const float betaLantern = 5.0f;
 const float gLantern = 3.0f;
 
+//BRDF Cook-Torrance with GGX
 vec3 BRDFCG(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float roughness) {
 	//vec3 V  - direction of the viewer
 	//vec3 N  - normal vector to the surface
@@ -87,6 +88,7 @@ void main() {
 	vec3 lightDir = normalize(gubo.DlightDir);          // light direction
 
 	//PL1
+
 	//light model
 	vec3 pLightDir = normalize(gubo.PLightPos - fragPos);
 	vec3 pointLightColor = gubo.PLightColor.rgb * pow(g / length(gubo.PLightPos - fragPos), beta);
@@ -95,6 +97,7 @@ void main() {
 	vec4 outColorP1 = vec4(pDiffSpec1 * pointLightColor.rgb, 1.0f);
 
 	//PL2
+
 	//light model
 	vec3 pLightDir2 = normalize(gubo.PLightPos2 - fragPos);
 	vec3 pointLightColor2 = gubo.PLightColor2.rgb * pow(g / length(gubo.PLightPos2 - fragPos), beta);
@@ -123,10 +126,7 @@ void main() {
 	vec4 outColorPL2 = vec4(pDiffSpecL2 * pointLightColorL2.rgb, 1.0f);
 
 	//ambient
-	//MA è la BRDF di ambient, che è costante per la ambient. Generalemente MA è il main color dell'oggetto
-	//noi gli passiamo ubo.amb per fare tooning del maincolor dell'oggetto
-	//ubo.amb 
-
+	
 	vec3 albedo = texture(tex, fragUV).rgb;		// main color
 	vec3 MA = albedo * ubo.amb;
 	vec3 LA = gubo.AmbLightColor;
