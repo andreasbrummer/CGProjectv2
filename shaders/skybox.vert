@@ -1,7 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 1, binding = 0) uniform UniformBufferObject {
+layout(set = 0, binding = 0) uniform UniformBufferObject {
 	float amb;
 	float gamma;
 	vec3 sColor;
@@ -20,17 +20,8 @@ layout(location = 2) out vec2 fragTexCoord;
 
 void main()
 {
-	gl_Position = (ubo.mvpMat * vec4(inPosition, 1.0)).xyww;
+	gl_Position = (ubo.mvpMat * vec4(inPosition, 1.0)).xyww; //only difference with a "normal" vert shader
 	fragPos = (ubo.mMat * vec4(inPosition, 1.0)).xyz;
 	fragNorm = (ubo.nMat * vec4(inNormal, 0.0)).xyz;
 	fragTexCoord = inTexCoord;
-
-	/*
-	fragTexCoord = inPosition;
-	vec4 pos = ubo.mvpMat * vec4(inPosition, 1.0);
-	gl_Position = pos.xyww;
-	/*
-	gl_Position = (ubo.mvpMat * vec4(inPosition, 1.0)).xyww;
-	fragTexCoord = inTexCoord;*/
-
 }

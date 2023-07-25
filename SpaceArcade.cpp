@@ -313,7 +313,7 @@ protected:
 		// be used in this pipeline. The first element will be set 0, and so on..
         POBJ.init(this, &VOBJ, "shaders/ObjectVert.spv", "shaders/ObjectFrag.spv", { &DSLGubo, &DSLOBJ });
 
-        PSkyBox.init(this, &VOBJ, "shaders/SkyboxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLGubo, &DSLOBJ });
+        PSkyBox.init(this, &VOBJ, "shaders/SkyboxVert.spv", "shaders/SkyBoxFrag.spv", { &DSLOBJ });
         PSkyBox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
 			VK_CULL_MODE_NONE, false);
 
@@ -625,10 +625,9 @@ protected:
                              static_cast<uint32_t>(MFloor.indices.size()), 1, 0, 0, 0);
 
             //SkyBox
-			DSGubo.bind(commandBuffer, PSkyBox, 0, currentImage);
             PSkyBox.bind(commandBuffer);
             MSkyBox.bind(commandBuffer);
-			DSSkyBox.bind(commandBuffer, PSkyBox, 1, currentImage);
+			DSSkyBox.bind(commandBuffer, PSkyBox, 0, currentImage);
 			vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MSkyBox.indices.size()), 1, 0, 0, 0);
 
@@ -957,7 +956,7 @@ protected:
 
 			World = glm::scale(glm::mat4(1), glm::vec3(150.0f));
 
-			uboSkyBox.amb = 1.0f; uboSkyBox.gamma = 180.0f; uboSkyBox.sColor = glm::vec3(1.0f);
+			uboSkyBox.amb = 1.0f; uboSkyBox.gamma = 180.0f; uboSkyBox.sColor = glm::vec3(1.0f); //actually useless for the skybox
             uboSkyBox.mvpMat = Prj * View * World;
             uboSkyBox.mMat = World;
             uboSkyBox.nMat = glm::inverse(glm::transpose(World));
